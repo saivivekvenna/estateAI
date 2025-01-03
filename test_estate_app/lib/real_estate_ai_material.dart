@@ -158,13 +158,13 @@ class _RealEstateAppState extends State<RealEstateApp>
                       const Icon(
                         Icons.arrow_upward_rounded,
                         color: Colors.green,
-                        size: 30, // Adjust size as needed
+                        size: 30, 
                       )
                     else if (value.toLowerCase() == 'down')
                       const Icon(
                         Icons.arrow_downward_rounded,
                         color: Colors.red,
-                        size: 30, // Adjust size as needed
+                        size: 30,
                       ),
                   ],
                 ),
@@ -258,7 +258,7 @@ class _RealEstateAppState extends State<RealEstateApp>
                   // hight when expanded 
                   height: _isChatExpanded
                       ? MediaQuery.of(context).size.height * 0.5
-                      : 700, // Reduced from 120
+                      : 700, 
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius:
@@ -273,7 +273,7 @@ class _RealEstateAppState extends State<RealEstateApp>
                   ),
                   child: Column(
                     children: [
-                      // Chat Header - reduce padding
+                      // chat Header 
                       Container(
                         padding: EdgeInsets.symmetric(
                             horizontal: 12, vertical: 4), 
