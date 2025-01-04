@@ -44,12 +44,9 @@ class _RealEstateAppState extends State<RealEstateApp>
       _messages.insert(0, textMessage);
     });
 
-
-    // String context = _pastChats.isNotEmpty
-    //     ? _pastChats.map((chat) => chat['messages'].last.text).join('\n')
-    //     : ''; //leave it empty if nothing is there
-
     String context = '';
+
+    //TODO: remove the excess informatoin that is being set
 
     for (int i = 0; i<_pastChats.length; i++){
       var sult = _pastChats[i]['messages'];
