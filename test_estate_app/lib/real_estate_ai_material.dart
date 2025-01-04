@@ -45,13 +45,17 @@ class _RealEstateAppState extends State<RealEstateApp>
     });
 
 
-    //TODO: LET THE SERVER SEE THE ENTIRE CHAT FOR CONTEXXT
-    String context = _pastChats.isNotEmpty
-        ? _pastChats.map((chat) => chat['messages'].last.text).join('\n')
-        : ''; //leave it empty if nothing is there
+    // String context = _pastChats.isNotEmpty
+    //     ? _pastChats.map((chat) => chat['messages'].last.text).join('\n')
+    //     : ''; //leave it empty if nothing is there
 
-    context = '$context\n${message.text}';
+    String context = '';
 
+    for (int i = 0; i<_pastChats.length; i++){
+      var sult = _pastChats[i]['messages'];
+      context += sult.toString();
+    }
+    //String context = _pastChats.toString() ;
     
     try {
       final response = await http.post(
@@ -79,15 +83,17 @@ class _RealEstateAppState extends State<RealEstateApp>
           _messages.insert(0, botMessage);
         });
 
-        // trying to save context - doesnt work
         _pastChats.add({
           'id': DateTime.now().toString(),
           'messages': List<types.Message>.from(_messages),
           'lastUpdated': DateTime.now(),
         });
+
+
       } else {
         _handleError('Unable to get a response from the server.');
       }
+
     } catch (error) {
       _handleError('Unable to connect to the server.');
     }
