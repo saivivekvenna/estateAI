@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:test_estate_app/real_estate_ai_material.dart';
-import 'noti_page.dart';
-import 'favs_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -109,8 +107,6 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
             physics: const NeverScrollableScrollPhysics(),
             children: const [
               RealEstateApp(),
-              NotiPage(),
-              FavsPage(),
               Icon(Icons.android),
             ],
           ),
