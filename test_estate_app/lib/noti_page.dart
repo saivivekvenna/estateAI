@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'filter_page.dart';
-import 'package:test_estate_app/real_estate_ai_material.dart';
 
 class NotiPage extends StatefulWidget {
   const NotiPage({super.key});

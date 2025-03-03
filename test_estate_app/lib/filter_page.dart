@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,13 +11,13 @@ class FilterPage extends StatefulWidget {
   final bool prompted;
 
   const FilterPage({
-    Key? key,
+    super.key,
     required this.properties,
     required this.propertiesFound,
     required this.updateProperties,
     required this.filtersFromPrompt,
     required this.prompted,
-  }) : super(key: key);
+  });
 
   @override
   _FilterPageState createState() => _FilterPageState();
@@ -495,7 +494,7 @@ bottomNavigationBar: Padding(
 
   Future<void> _sendRequestToServer() async {
     final url = Uri.parse('http://192.168.1.91:5000/filter');
-    final _filters = {
+    final filters = {
       'minPrice': _minPrice,
       'maxPrice': _maxPrice,
       'bedsMin': _bedrooms,
@@ -523,7 +522,7 @@ bottomNavigationBar: Padding(
       "hasGarage": _hasGarage,
       "parkingSpots": _parkingSpots,
     };
-    final jsonString = jsonEncode(_filters);
+    final jsonString = jsonEncode(filters);
     try {
       final response = await http.post(
         url,

@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'filter_page.dart';
-import 'dart:ui' as ui;
-import 'dart:typed_data';
-import 'package:geolocator/geolocator.dart';
 //import 'package:google_maps_cluster_manager/google_maps_cluster_manager.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
 import 'package:intl/intl.dart';
-
+ 
 class RealEstateApp extends StatefulWidget {
   const RealEstateApp({super.key});
 

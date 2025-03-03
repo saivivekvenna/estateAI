@@ -139,8 +139,9 @@ class _RealEstateAppState extends State<RealEstateApp>
         //looping through each propertiy
         final latitude = property['latitude'];
         final longitude = property['longitude'];
-        if (latitude == null || longitude == null)
+        if (latitude == null || longitude == null) {
           return false; //ensureing it has long and lat
+        }
 
         return bounds.contains(LatLng(
             latitude, longitude)); // checks if properties are within bounds
