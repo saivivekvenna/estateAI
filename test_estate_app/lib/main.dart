@@ -31,29 +31,32 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: DefaultTabController(
-        length: 4,
+        length: 3,
         child: Scaffold(
           extendBodyBehindAppBar: true,
           appBar: PreferredSize(
-            preferredSize: Size.fromHeight(50),
+            preferredSize: Size.fromHeight(60),
             child: AppBar(
+              primary: false, // Removes default app bar padding and divider
               backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
               elevation: 0,
               flexibleSpace: Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
-                  padding: EdgeInsets.only(bottom: 0, left: 20, right: 20),
+                  padding: EdgeInsets.only(bottom: 0, left: 90, right: 90),
                   child: Container(
-                    height: 50,
+                    height: 60,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.8),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: TabBar(
                       controller: _tabController,
+                        indicatorColor: Colors.transparent, // Removes the default line
+  dividerColor: Colors.transparent, // Removes the divider
+
                       indicator: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        color: Colors.white.withOpacity(0.8),
                       ),
                       tabs: [
                         Tab(
@@ -62,34 +65,25 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                             color: _tabController.index == 0
                                 ? Colors.green
                                 : Colors.black,
-                            size: 35,
+                            size: 40,
+                          ),
+                        ),
+                        Tab(
+                          icon: Icon(
+                            Icons.home_rounded,
+                            color: _tabController.index == 1
+                                ? Colors.blueAccent
+                                : Colors.black,
+                            size: 40,
                           ),
                         ),
                         Tab(
                           icon: Icon(
                             Icons.notifications,
-                            color: _tabController.index == 1
+                            color: _tabController.index == 2
                                 ? Colors.yellow
                                 : Colors.black,
-                            size: 35,
-                          ),
-                        ),
-                        Tab(
-                          icon: Icon(
-                            Icons.favorite,
-                            color: _tabController.index == 2
-                                ? Colors.redAccent
-                                : Colors.black,
-                            size: 35,
-                          ),
-                        ),
-                        Tab(
-                          icon: Icon(
-                            Icons.person,
-                            color: _tabController.index == 3
-                                ? Colors.blue
-                                : Colors.black,
-                            size: 35,
+                            size: 40,
                           ),
                         ),
                       ],

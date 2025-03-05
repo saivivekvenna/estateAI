@@ -6,7 +6,7 @@ import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
 import 'package:intl/intl.dart';
- 
+
 class RealEstateApp extends StatefulWidget {
   const RealEstateApp({super.key});
 
@@ -43,12 +43,12 @@ class _RealEstateAppState extends State<RealEstateApp>
 
     //TODO: remove the excess informatoin that is being set
 
-    for (int i = 0; i<_pastChats.length; i++){
+    for (int i = 0; i < _pastChats.length; i++) {
       var sult = _pastChats[i]['messages'];
       context += sult.toString();
     }
     //String context = _pastChats.toString() ;
-    
+
     try {
       final response = await http.post(
         Uri.parse('http://192.168.1.91:5000/search'),
@@ -80,12 +80,9 @@ class _RealEstateAppState extends State<RealEstateApp>
           'messages': List<types.Message>.from(_messages),
           'lastUpdated': DateTime.now(),
         });
-
-
       } else {
         _handleError('Unable to get a response from the server.');
       }
-
     } catch (error) {
       _handleError('Unable to connect to the server.');
     }
@@ -103,7 +100,6 @@ class _RealEstateAppState extends State<RealEstateApp>
       _messages.insert(0, errorText);
     });
   }
-
 
   //clears up the memory when user is done
   @override
@@ -156,7 +152,7 @@ class _RealEstateAppState extends State<RealEstateApp>
                       const Icon(
                         Icons.arrow_upward_rounded,
                         color: Colors.green,
-                        size: 30, 
+                        size: 30,
                       )
                     else if (value.toLowerCase() == 'down')
                       const Icon(
@@ -222,6 +218,39 @@ class _RealEstateAppState extends State<RealEstateApp>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+extendBodyBehindAppBar: true,
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(60), // Set height of AppBar
+          child: AppBar(
+            primary: false, // Removes default app bar padding
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            flexibleSpace: Align(
+              child: Padding(
+                padding: EdgeInsets.only(left: 0, top: 4, right: 330), // Adjust left padding
+                child: Container(
+                  
+                  height: 60,
+                  width: 100, // Make it a square floating button
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.8),
+                    borderRadius: BorderRadius.only(topRight: Radius.circular(30),bottomRight: Radius.circular(30)), // Rounded design
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.history, // Change this icon as needed
+                      color: Colors.black,
+                      size: 35, // Adjust icon size
+                    ),
+                    onPressed: () {
+                      // Define button action here
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       backgroundColor: Color.fromRGBO(217, 217, 217, 1),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(0, 120, 0, 0),
@@ -253,10 +282,10 @@ class _RealEstateAppState extends State<RealEstateApp>
                 left: 0,
                 right: 0,
                 child: Container(
-                  // hight when expanded 
+                  // hight when expanded
                   height: _isChatExpanded
                       ? MediaQuery.of(context).size.height * 0.5
-                      : 700, 
+                      : 700,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius:
@@ -271,10 +300,10 @@ class _RealEstateAppState extends State<RealEstateApp>
                   ),
                   child: Column(
                     children: [
-                      // chat Header 
+                      // chat Header
                       Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4), 
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
                           border: Border(
                               bottom: BorderSide(color: Colors.grey.shade200)),
@@ -289,16 +318,14 @@ class _RealEstateAppState extends State<RealEstateApp>
                             Text(
                               'Chat',
                               style: TextStyle(
-                                fontSize: 14, 
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             IconButton(
-                              padding: EdgeInsets
-                                  .zero, 
-                              constraints:
-                                  BoxConstraints(), 
-                              icon: Icon(Icons.close, size: 20), 
+                              padding: EdgeInsets.zero,
+                              constraints: BoxConstraints(),
+                              icon: Icon(Icons.close, size: 20),
                               onPressed: () {
                                 setState(() {
                                   _showChat = false;
