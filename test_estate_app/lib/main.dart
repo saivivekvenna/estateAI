@@ -48,7 +48,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                   child: Container(
                     height: 60,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Color.fromRGBO(143, 206, 157, 1),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: TabBar(

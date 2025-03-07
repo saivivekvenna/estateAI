@@ -4,7 +4,7 @@ import 'dart:convert';
 //import 'package:google_maps_cluster_manager/google_maps_cluster_manager.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-
+import 'package:soft_edge_blur/soft_edge_blur.dart';
 import 'package:intl/intl.dart';
 
 class RealEstateApp extends StatefulWidget {
@@ -21,8 +21,6 @@ class _RealEstateAppState extends State<RealEstateApp>
 
   final List<types.Message> _messages = [];
   final _user = const types.User(id: 'user');
-  bool _isChatExpanded = false;
-  bool _showChat = false;
   List<dynamic> results = [];
 
   final List<Map<String, dynamic>> _pastChats = []; // Store past chats
@@ -218,182 +216,90 @@ class _RealEstateAppState extends State<RealEstateApp>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-extendBodyBehindAppBar: true,
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(60), // Set height of AppBar
-          child: AppBar(
-            primary: false, // Removes default app bar padding
-            backgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            flexibleSpace: Align(
-              child: Padding(
-                padding: EdgeInsets.only(left: 0, top: 4, right: 330), // Adjust left padding
-                child: Container(
-                  
-                  height: 60,
-                  width: 100, // Make it a square floating button
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8),
-                    borderRadius: BorderRadius.only(topRight: Radius.circular(30),bottomRight: Radius.circular(30)), // Rounded design
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(60),
+        child: AppBar(
+          primary: false,
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          elevation: 200,
+          flexibleSpace: Align(
+            child: Padding(
+              padding: EdgeInsets.only(left: 0, top: 4, right: 330),
+              child: Container(
+                height: 60,
+                width: 100,
+                decoration: BoxDecoration(
+                  color: Color.fromRGBO(143, 206, 157, 1),
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
                   ),
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.history, // Change this icon as needed
-                      color: Colors.black,
-                      size: 35, // Adjust icon size
-                    ),
-                    onPressed: () {
-                      // Define button action here
-                    },
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.history,
+                    color: Colors.black,
+                    size: 35,
                   ),
+                  onPressed: () {
+                    // Define button action here
+                  },
                 ),
               ),
             ),
           ),
         ),
-      backgroundColor: Color.fromRGBO(217, 217, 217, 1),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(0, 120, 0, 0),
-        child: Stack(
-          children: [
-            // Scrollable sheet in the background
-            ListView.builder(
-              padding: const EdgeInsets.only(bottom: 100),
-              itemCount: results.length,
-              itemBuilder: (BuildContext context, int index) {
-                return card(
-                    results[index]['propertyType']
-                        .split('_')
-                        .map(
-                            (word) => word[0] + word.substring(1).toLowerCase())
-                        .join(' '),
-                    results[index]['address'],
-                    formatPrice(results[index]['price']),
-                    results[index]['bedrooms'].toString(),
-                    results[index]['bathrooms'].toString(),
-                    "up",
-                    results[index]['livingArea'].toString());
-              },
-            ),
-
-            if (_showChat)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  // hight when expanded
-                  height: _isChatExpanded
-                      ? MediaQuery.of(context).size.height * 0.5
-                      : 700,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(30)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: Offset(0, -5),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      // chat Header
-                      Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          border: Border(
-                              bottom: BorderSide(color: Colors.grey.shade200)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.history),
-                              onPressed: () {},
-                            ),
-                            Text(
-                              'Chat',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            IconButton(
-                              padding: EdgeInsets.zero,
-                              constraints: BoxConstraints(),
-                              icon: Icon(Icons.close, size: 20),
-                              onPressed: () {
-                                setState(() {
-                                  _showChat = false;
-                                  _isChatExpanded = false;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      if (_isChatExpanded)
-                        Expanded(
-                          child: Chat(
-                            messages: _messages,
-                            onSendPressed: _handleSendPressed,
-                            user: _user,
-                            theme: DefaultChatTheme(
-                                backgroundColor: Colors.white,
-                                inputBackgroundColor:
-                                    Color.fromRGBO(217, 217, 217, 1),
-                                primaryColor:
-                                    const Color.fromARGB(255, 0, 0, 0),
-                                inputBorderRadius:
-                                    BorderRadius.all(Radius.circular(30)),
-                                inputTextColor: Colors.black,
-                                inputMargin: EdgeInsets.all(20),
-                                sendButtonIcon: Icon(Icons.search),
-                                highlightMessageColor: Colors.white,
-                                inputTextCursorColor: Colors.black),
-                          ),
-                        ),
-                    ],
-                  ),
+      ),
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Move the blur effect to the body to ensure the AppBar stays above it
+          Positioned.fill(
+            child: SoftEdgeBlur(
+              edges: [
+                EdgeBlur(
+                  type: EdgeType.topEdge,
+                  size: 160,
+                  sigma: 30,
+                  controlPoints: [
+                    ControlPoint(position: 0.5, type: ControlPointType.visible),
+                    ControlPoint(
+                        position: 1, type: ControlPointType.transparent),
+                  ],
                 ),
-              ),
-
-            // Chat Toggle Button
-            if (!_showChat)
-              Positioned(
-                bottom: 30,
-                left: 40,
-                right: 40,
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _showChat = true;
-                      _isChatExpanded = true;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
+              ],
+              child: Chat(
+                messages: _messages,
+                onSendPressed: _handleSendPressed,
+                user: _user,
+                inputOptions: const InputOptions(
+                  sendButtonVisibilityMode: SendButtonVisibilityMode.always,
+                ),
+                theme: const DefaultChatTheme(
                     backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                    inputBackgroundColor: Color.fromRGBO(217, 217, 217, 1),
+                    primaryColor: Color.fromRGBO(88, 88, 88, 1),
+                    inputBorderRadius: BorderRadius.all(Radius.circular(30)),
+                    inputTextColor: Colors.black,
+                    inputMargin: EdgeInsets.fromLTRB(20, 20, 20, 30),
+                    sendButtonIcon: Icon(Icons.send),
+                    secondaryColor: Color.fromRGBO(52, 99, 56, 1),
+                    highlightMessageColor: Colors.white,
+                    receivedMessageBodyTextStyle:
+                        TextStyle(color: Colors.white, fontSize: 17),
+                    sentMessageBodyTextStyle:
+                        TextStyle(color: Colors.white, fontSize: 17),
+                    inputTextCursorColor: Colors.black,
+                      inputPadding: EdgeInsets.all(10), // Adjust padding of the text field itself
+
                     ),
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  ),
-                  child: Text(
-                    "Chat with Assistant",
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
               ),
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
