@@ -21,9 +21,24 @@ class _RealEstateAppState extends State<RealEstateApp>
 
   final List<types.Message> _messages = [];
   final _user = const types.User(id: 'user');
+  final _otherUser = const types.User(id: 'bot'); // Another user
+
   List<dynamic> results = [];
 
   final List<Map<String, dynamic>> _pastChats = []; // Store past chats
+
+  void _simulateOtherUserMessage() {
+    final otherMessage = types.TextMessage(
+      author: _otherUser,
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      text: 'Hello, this is a response from the other person!',
+    );
+
+    setState(() {
+      _messages.insert(0, otherMessage);
+    });
+  }
 
   void _handleSendPressed(types.PartialText message) async {
     final textMessage = types.TextMessage(
@@ -35,55 +50,55 @@ class _RealEstateAppState extends State<RealEstateApp>
 
     setState(() {
       _messages.insert(0, textMessage);
+
+      Future.delayed(const Duration(seconds: 2), _simulateOtherUserMessage);
     });
 
-    String context = '';
+    //String context = '';
 
-    //TODO: remove the excess informatoin that is being set
-
-    for (int i = 0; i < _pastChats.length; i++) {
-      var sult = _pastChats[i]['messages'];
-      context += sult.toString();
-    }
+    // for (int i = 0; i < _pastChats.length; i++) {
+    //   var sult = _pastChats[i]['messages'];
+    //   context += sult.toString();
+    // }
     //String context = _pastChats.toString() ;
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://192.168.1.91:5000/search'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'query': message.text, 'context': context}),
-      );
+    // try {
+    //   final response = await http.post(
+    //     Uri.parse('http://192.168.1.91:5000/search'),
+    //     headers: {'Content-Type': 'application/json'},
+    //     body: json.encode({'query': message.text, 'context': context}),
+    //   );
 
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        final agentResponse = jsonResponse['agentResponse'];
-        final resultsshit = jsonResponse['results'];
+    //   if (response.statusCode == 200) {
+    //     final jsonResponse = json.decode(response.body);
+    //     final agentResponse = jsonResponse['agentResponse'];
+    //     final resultsshit = jsonResponse['results'];
 
-        results = resultsshit;
+    //     results = resultsshit;
 
-        // the GPT response to the chat
-        final botMessage = types.TextMessage(
-          author: const types.User(id: 'bot'),
-          createdAt: DateTime.now().millisecondsSinceEpoch,
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          text: agentResponse,
-        );
+    //     // the GPT response to the chat
+    //     final botMessage = types.TextMessage(
+    //       author: const types.User(id: 'bot'),
+    //       createdAt: DateTime.now().millisecondsSinceEpoch,
+    //       id: DateTime.now().millisecondsSinceEpoch.toString(),
+    //       text: agentResponse,
+    //     );
 
-        setState(() {
-          _messages.insert(0, botMessage);
-        });
+    //     setState(() {
+    //       _messages.insert(0, botMessage);
+    //     });
 
-        _pastChats.add({
-          'id': DateTime.now().toString(),
-          'messages': List<types.Message>.from(_messages),
-          'lastUpdated': DateTime.now(),
-        });
-      } else {
-        _handleError('Unable to get a response from the server.');
-      }
-    } catch (error) {
-      _handleError('Unable to connect to the server.');
-    }
+    //     _pastChats.add({
+    //       'id': DateTime.now().toString(),
+    //       'messages': List<types.Message>.from(_messages),
+    //       'lastUpdated': DateTime.now(),
+    //     });
+    //   } else {
+    //     _handleError('Unable to get a response from the server.');
+    //   }
+    // } catch (error) {
+    //   _handleError('Unable to connect to the server.');
+    // }
   }
 
   void _handleError(String errorMessage) {
@@ -226,11 +241,12 @@ class _RealEstateAppState extends State<RealEstateApp>
           shadowColor: Colors.transparent,
           elevation: 200,
           flexibleSpace: Align(
+            alignment: Alignment.centerLeft,
             child: Padding(
-              padding: EdgeInsets.only(left: 0, top: 4, right: 330),
+              padding: EdgeInsets.only(left: 0, top: 4, right: 0),
               child: Container(
                 height: 60,
-                width: 100,
+                width: 70,
                 decoration: BoxDecoration(
                   color: Color.fromRGBO(143, 206, 157, 1),
                   borderRadius: BorderRadius.only(
@@ -279,23 +295,22 @@ class _RealEstateAppState extends State<RealEstateApp>
                   sendButtonVisibilityMode: SendButtonVisibilityMode.always,
                 ),
                 theme: const DefaultChatTheme(
-                    backgroundColor: Colors.white,
-                    inputBackgroundColor: Color.fromRGBO(217, 217, 217, 1),
-                    primaryColor: Color.fromRGBO(88, 88, 88, 1),
-                    inputBorderRadius: BorderRadius.all(Radius.circular(30)),
-                    inputTextColor: Colors.black,
-                    inputMargin: EdgeInsets.fromLTRB(20, 20, 20, 30),
-                    sendButtonIcon: Icon(Icons.send),
-                    secondaryColor: Color.fromRGBO(52, 99, 56, 1),
-                    highlightMessageColor: Colors.white,
-                    receivedMessageBodyTextStyle:
-                        TextStyle(color: Colors.white, fontSize: 17),
-                    sentMessageBodyTextStyle:
-                        TextStyle(color: Colors.white, fontSize: 17),
-                    inputTextCursorColor: Colors.black,
-                      inputPadding: EdgeInsets.all(10), // Adjust padding of the text field itself
-
-                    ),
+                  backgroundColor: Colors.white,
+                  inputBackgroundColor: Color.fromRGBO(217, 217, 217, 1),
+                  primaryColor: Color.fromRGBO(88, 88, 88, 1),
+                  inputBorderRadius: BorderRadius.all(Radius.circular(30)),
+                  inputTextColor: Colors.black,
+                  inputMargin: EdgeInsets.fromLTRB(20, 20, 20, 30),
+                  sendButtonIcon: Icon(Icons.send),
+                  secondaryColor: Color.fromRGBO(52, 99, 56, 1),
+                  highlightMessageColor: Colors.white,
+                  receivedMessageBodyTextStyle:
+                      TextStyle(color: Colors.white, fontSize: 17),
+                  sentMessageBodyTextStyle:
+                      TextStyle(color: Colors.white, fontSize: 17),
+                  inputTextCursorColor: Colors.black,
+                  inputPadding: EdgeInsets.all(10),
+                ),
               ),
             ),
           ),
