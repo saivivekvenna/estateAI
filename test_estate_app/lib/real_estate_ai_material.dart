@@ -36,23 +36,43 @@ class _RealEstateAppState extends State<RealEstateApp>
   //   });
   // }
 
-  void _sendCustomMessage(String type) {
-    Map<String, dynamic> metadata;
+  void _sendCustomMessage() {
+    Map<String, dynamic> input;
 
-    metadata = {
+    input = {
       'type': 'response',
-      'property': {
-        'title': 'Luxury Apartment',
-        'address': '456 Elm St, Citytown',
-        'price': '\$750,000',
-        'beds': 4,
-        'baths': 3,
-        'area': '2200 sqft',
-        'status': 'up'
-      },
+      'properties': [
+        {
+          'title': 'Luxury Apartment',
+          'address': '456 Elm St, Citytown',
+          'price': '\$750,000',
+          'beds': 4,
+          'baths': 3,
+          'area': '2200 sqft',
+          'status': 'up'
+        },
+        {
+          'title': 'Modern Condo',
+          'address': '789 Oak St, Citytown',
+          'price': '\$600,000',
+          'beds': 3,
+          'baths': 2,
+          'area': '1800 sqft',
+          'status': 'up'
+        },
+        {
+          'title': 'Beachfront House',
+          'address': '123 Shoreline Dr, Beachtown',
+          'price': '\$1,200,000',
+          'beds': 5,
+          'baths': 4,
+          'area': '3500 sqft',
+          'status': 'up'
+        }
+      ],
       'message': {
         'content':
-            'This looks like a great property! Would you like to book a viewing?'
+            'Here are some properties I found that match your criteria. Would you like to book a viewing?'
       }
     };
 
@@ -60,7 +80,7 @@ class _RealEstateAppState extends State<RealEstateApp>
       author: _otherUser,
       createdAt: DateTime.now().millisecondsSinceEpoch,
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      metadata: metadata, // Store message type and data
+      metadata: input, // Store message type and data
     );
 
     setState(() {
@@ -78,7 +98,7 @@ class _RealEstateAppState extends State<RealEstateApp>
 
     setState(() {
       _messages.insert(0, textMessage);
-      _sendCustomMessage(" ");
+      _sendCustomMessage();
     });
   }
 
@@ -94,60 +114,87 @@ class _RealEstateAppState extends State<RealEstateApp>
     return formatter.format(price);
   }
 
-  Widget customMessageBuilder(types.CustomMessage message,
-      {required int messageWidth}) {
-    if (message.metadata?['type'] == 'response') {
-      return Card(
-        color: Colors.white,
-        elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(8),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+Widget customMessageBuilder(types.CustomMessage message,
+    {required int messageWidth}) {
+  if (message.metadata?['type'] == 'response') {
+    List<dynamic> properties = message.metadata?['properties'] ?? [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var property in properties)
+          Card(
+            color: Colors.white,
+            elevation: 6,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(8),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(message.metadata?['property']['title'] ?? 'Unknown',
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(property['title'] ?? 'Unknown',
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      Icon(
+                        property['status'] == 'up'
+                            ? Icons.arrow_upward
+                            : Icons.arrow_downward,
+                        color: property['status'] == 'up'
+                            ? Colors.green
+                            : Colors.red,
+                      ),
+                    ],
+                  ),
+
+                  Text(property['address'] ?? 'Unknown',
+                      style: const TextStyle(color: Colors.grey)),
+                  
+                  const SizedBox(height: 8),
+
+                  Text(property['price'] ?? '\$0',
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
-                  Icon(
-                    message.metadata?['property']['status'] == 'up'
-                        ? Icons.arrow_upward
-                        : Icons.arrow_downward,
-                    color: message.metadata?['property']['status'] == 'up'
-                        ? Colors.green
-                        : Colors.red,
+                          fontSize: 16,
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold)),
+                  
+                  const SizedBox(height: 10),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("${property['beds']} Beds"),
+                      Text("${property['baths']} Baths"),
+                      Text(property['area'] ?? 'N/A'),
+                    ],
                   ),
                 ],
               ),
-              Text(message.metadata?['property']['address'] ?? 'Unknown',
-                  style: const TextStyle(color: Colors.grey)),
-              const SizedBox(height: 8),
-              Text(message.metadata?['property']['price'] ?? '\$0',
-                  style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("${message.metadata?['property']['beds']} Beds"),
-                  Text("${message.metadata?['property']['baths']} Baths"),
-                  Text(message.metadata?['property']['area'] ?? 'N/A'),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
-      );
-    }
 
-    return const SizedBox.shrink(); // Return an empty widget if no match
+        if (message.metadata?['message'] != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Text(
+              message.metadata?['message']['content'] ?? '',
+              style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                  fontStyle: FontStyle.normal),
+            ),
+          ),
+      ],
+    );
   }
+
+  return const SizedBox.shrink(); // Return an empty widget if no match
+}
+
 
   Widget card(
     String title,
