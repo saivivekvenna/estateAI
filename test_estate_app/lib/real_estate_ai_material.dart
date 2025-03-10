@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 //import 'package:google_maps_cluster_manager/google_maps_cluster_manager.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -25,18 +23,48 @@ class _RealEstateAppState extends State<RealEstateApp>
 
   List<dynamic> results = [];
 
-  final List<Map<String, dynamic>> _pastChats = []; // Store past chats
+  // void _simulateOtherUserMessage() {
+  //   final otherMessage = types.TextMessage(
+  //     author: _otherUser,
+  //     createdAt: DateTime.now().millisecondsSinceEpoch,
+  //     id: DateTime.now().millisecondsSinceEpoch.toString(),
+  //     text: 'Heres what I found, let me know what you think',
+  //   );
 
-  void _simulateOtherUserMessage() {
-    final otherMessage = types.TextMessage(
+  //   setState(() {
+  //     _messages.insert(0, otherMessage);
+  //   });
+  // }
+
+  void _sendCustomMessage(String type) {
+    Map<String, dynamic> metadata;
+
+    metadata = {
+      'type': 'response',
+      'property': {
+        'title': 'Luxury Apartment',
+        'address': '456 Elm St, Citytown',
+        'price': '\$750,000',
+        'beds': 4,
+        'baths': 3,
+        'area': '2200 sqft',
+        'status': 'up'
+      },
+      'message': {
+        'content':
+            'This looks like a great property! Would you like to book a viewing?'
+      }
+    };
+
+    final customMessage = types.CustomMessage(
       author: _otherUser,
       createdAt: DateTime.now().millisecondsSinceEpoch,
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: 'Hello, this is a response from the other person!',
+      metadata: metadata, // Store message type and data
     );
 
     setState(() {
-      _messages.insert(0, otherMessage);
+      _messages.insert(0, customMessage);
     });
   }
 
@@ -44,73 +72,13 @@ class _RealEstateAppState extends State<RealEstateApp>
     final textMessage = types.TextMessage(
       author: _user,
       createdAt: DateTime.now().millisecondsSinceEpoch,
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: DateTime.now().toString(),
       text: message.text,
     );
 
     setState(() {
       _messages.insert(0, textMessage);
-
-      Future.delayed(const Duration(seconds: 2), _simulateOtherUserMessage);
-    });
-
-    //String context = '';
-
-    // for (int i = 0; i < _pastChats.length; i++) {
-    //   var sult = _pastChats[i]['messages'];
-    //   context += sult.toString();
-    // }
-    //String context = _pastChats.toString() ;
-
-    // try {
-    //   final response = await http.post(
-    //     Uri.parse('http://192.168.1.91:5000/search'),
-    //     headers: {'Content-Type': 'application/json'},
-    //     body: json.encode({'query': message.text, 'context': context}),
-    //   );
-
-    //   if (response.statusCode == 200) {
-    //     final jsonResponse = json.decode(response.body);
-    //     final agentResponse = jsonResponse['agentResponse'];
-    //     final resultsshit = jsonResponse['results'];
-
-    //     results = resultsshit;
-
-    //     // the GPT response to the chat
-    //     final botMessage = types.TextMessage(
-    //       author: const types.User(id: 'bot'),
-    //       createdAt: DateTime.now().millisecondsSinceEpoch,
-    //       id: DateTime.now().millisecondsSinceEpoch.toString(),
-    //       text: agentResponse,
-    //     );
-
-    //     setState(() {
-    //       _messages.insert(0, botMessage);
-    //     });
-
-    //     _pastChats.add({
-    //       'id': DateTime.now().toString(),
-    //       'messages': List<types.Message>.from(_messages),
-    //       'lastUpdated': DateTime.now(),
-    //     });
-    //   } else {
-    //     _handleError('Unable to get a response from the server.');
-    //   }
-    // } catch (error) {
-    //   _handleError('Unable to connect to the server.');
-    // }
-  }
-
-  void _handleError(String errorMessage) {
-    final errorText = types.TextMessage(
-      author: const types.User(id: 'bot'),
-      createdAt: DateTime.now().millisecondsSinceEpoch,
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      text: errorMessage,
-    );
-
-    setState(() {
-      _messages.insert(0, errorText);
+      _sendCustomMessage(" ");
     });
   }
 
@@ -126,6 +94,61 @@ class _RealEstateAppState extends State<RealEstateApp>
     return formatter.format(price);
   }
 
+  Widget customMessageBuilder(types.CustomMessage message,
+      {required int messageWidth}) {
+    if (message.metadata?['type'] == 'response') {
+      return Card(
+        color: Colors.white,
+        elevation: 6,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(8),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(message.metadata?['property']['title'] ?? 'Unknown',
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
+                  Icon(
+                    message.metadata?['property']['status'] == 'up'
+                        ? Icons.arrow_upward
+                        : Icons.arrow_downward,
+                    color: message.metadata?['property']['status'] == 'up'
+                        ? Colors.green
+                        : Colors.red,
+                  ),
+                ],
+              ),
+              Text(message.metadata?['property']['address'] ?? 'Unknown',
+                  style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 8),
+              Text(message.metadata?['property']['price'] ?? '\$0',
+                  style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("${message.metadata?['property']['beds']} Beds"),
+                  Text("${message.metadata?['property']['baths']} Baths"),
+                  Text(message.metadata?['property']['area'] ?? 'N/A'),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink(); // Return an empty widget if no match
+  }
+
   Widget card(
     String title,
     String address,
@@ -136,14 +159,14 @@ class _RealEstateAppState extends State<RealEstateApp>
     String livingArea,
   ) {
     return Card(
-      color: Colors.white, //color of card background
-      elevation: 8, //effect of elevation for each card - adds a shadow
-      margin: const EdgeInsets.all(12),
+      color: Colors.white, // Background color
+      elevation: 8, // Shadow effect for depth
+      margin: const EdgeInsets.all(12), // Outer spacing
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12), //rounded corners
+        borderRadius: BorderRadius.circular(12), // Rounded corners
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, //align on the left
+        crossAxisAlignment: CrossAxisAlignment.start, // Align to left
         children: [
           Padding(
             padding:
@@ -158,66 +181,46 @@ class _RealEstateAppState extends State<RealEstateApp>
                       child: Text(
                         title,
                         style: const TextStyle(fontSize: 20),
-                        overflow: TextOverflow.ellipsis,
+                        overflow: TextOverflow.ellipsis, // Cut text if too long
                       ),
                     ),
                     if (value.toLowerCase() == 'up')
-                      const Icon(
-                        Icons.arrow_upward_rounded,
-                        color: Colors.green,
-                        size: 30,
-                      )
+                      const Icon(Icons.arrow_upward_rounded,
+                          color: Colors.green, size: 30)
                     else if (value.toLowerCase() == 'down')
-                      const Icon(
-                        Icons.arrow_downward_rounded,
-                        color: Colors.red,
-                        size: 30,
-                      ),
+                      const Icon(Icons.arrow_downward_rounded,
+                          color: Colors.red, size: 30),
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  address,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black,
-                  ),
-                ),
+                Text(address,
+                    style: const TextStyle(fontSize: 14, color: Colors.black)),
                 const SizedBox(height: 10),
-                Text(
-                  price,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                ),
+                Text(price,
+                    style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green)),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.bed, color: Colors.black),
-                        const SizedBox(width: 4),
-                        Text("$beds Beds"),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        const Icon(Icons.bathtub, color: Colors.black),
-                        const SizedBox(width: 4),
-                        Text("$baths Baths"),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        const Icon(Icons.square_foot_rounded,
-                            color: Colors.black),
-                        const SizedBox(width: 4),
-                        Text("$livingArea sq ft"),
-                      ],
-                    ),
+                    Row(children: [
+                      const Icon(Icons.bed, color: Colors.black),
+                      const SizedBox(width: 4),
+                      Text("$beds Beds")
+                    ]),
+                    Row(children: [
+                      const Icon(Icons.bathtub, color: Colors.black),
+                      const SizedBox(width: 4),
+                      Text("$baths Baths")
+                    ]),
+                    Row(children: [
+                      const Icon(Icons.square_foot_rounded,
+                          color: Colors.black),
+                      const SizedBox(width: 4),
+                      Text("$livingArea sq ft")
+                    ]),
                   ],
                 ),
               ],
@@ -278,7 +281,7 @@ class _RealEstateAppState extends State<RealEstateApp>
               edges: [
                 EdgeBlur(
                   type: EdgeType.topEdge,
-                  size: 160,
+                  size: 200,
                   sigma: 30,
                   controlPoints: [
                     ControlPoint(position: 0.5, type: ControlPointType.visible),
@@ -287,29 +290,32 @@ class _RealEstateAppState extends State<RealEstateApp>
                   ],
                 ),
               ],
-              child: Chat(
-                messages: _messages,
-                onSendPressed: _handleSendPressed,
-                user: _user,
-                inputOptions: const InputOptions(
-                  sendButtonVisibilityMode: SendButtonVisibilityMode.always,
-                ),
-                theme: const DefaultChatTheme(
-                  backgroundColor: Colors.white,
-                  inputBackgroundColor: Color.fromRGBO(217, 217, 217, 1),
-                  primaryColor: Color.fromRGBO(88, 88, 88, 1),
-                  inputBorderRadius: BorderRadius.all(Radius.circular(30)),
-                  inputTextColor: Colors.black,
-                  inputMargin: EdgeInsets.fromLTRB(20, 20, 20, 30),
-                  sendButtonIcon: Icon(Icons.send),
-                  secondaryColor: Color.fromRGBO(52, 99, 56, 1),
-                  highlightMessageColor: Colors.white,
-                  receivedMessageBodyTextStyle:
-                      TextStyle(color: Colors.white, fontSize: 17),
-                  sentMessageBodyTextStyle:
-                      TextStyle(color: Colors.white, fontSize: 17),
-                  inputTextCursorColor: Colors.black,
-                  inputPadding: EdgeInsets.all(10),
+              child: SizedBox.expand(
+                child: Chat(
+                  messages: _messages,
+                  onSendPressed: _handleSendPressed,
+                  user: _user,
+                  customMessageBuilder: customMessageBuilder,
+                  inputOptions: const InputOptions(
+                    sendButtonVisibilityMode: SendButtonVisibilityMode.always,
+                  ),
+                  theme: const DefaultChatTheme(
+                    backgroundColor: Colors.white,
+                    inputBackgroundColor: Color.fromRGBO(217, 217, 217, 1),
+                    primaryColor: Color.fromRGBO(88, 88, 88, 1),
+                    inputBorderRadius: BorderRadius.all(Radius.circular(30)),
+                    inputTextColor: Colors.black,
+                    inputMargin: EdgeInsets.fromLTRB(20, 20, 20, 30),
+                    sendButtonIcon: Icon(Icons.send),
+                    secondaryColor: Color.fromRGBO(52, 99, 56, 1),
+                    highlightMessageColor: Colors.white,
+                    receivedMessageBodyTextStyle:
+                        TextStyle(color: Colors.white, fontSize: 17),
+                    sentMessageBodyTextStyle:
+                        TextStyle(color: Colors.white, fontSize: 17),
+                    inputTextCursorColor: Colors.black,
+                    inputPadding: EdgeInsets.all(10),
+                  ),
                 ),
               ),
             ),

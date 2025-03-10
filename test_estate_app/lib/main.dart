@@ -18,7 +18,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -53,11 +53,11 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                     ),
                     child: TabBar(
                       controller: _tabController,
-                        indicatorColor: Colors.transparent, // Removes the default line
-  dividerColor: Colors.transparent, // Removes the divider
+                      indicatorColor:
+                          Colors.transparent, // Removes the default line
+                      dividerColor: Colors.transparent, // Removes the divider
 
-                      indicator: BoxDecoration(
-                      ),
+                      indicator: BoxDecoration(),
                       tabs: [
                         Tab(
                           icon: Icon(
@@ -70,7 +70,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                         ),
                         Tab(
                           icon: Icon(
-                            Icons.home_rounded,
+                            Icons.swipe_down_rounded,
                             color: _tabController.index == 1
                                 ? Colors.blueAccent
                                 : Colors.black,
@@ -102,6 +102,8 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
             children: const [
               RealEstateApp(),
               Icon(Icons.android),
+              Icon(Icons.android),
+
             ],
           ),
         ),
@@ -109,4 +111,3 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     );
   }
 }
-
