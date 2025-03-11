@@ -114,6 +114,7 @@ class _RealEstateAppState extends State<RealEstateApp>
     return formatter.format(price);
   }
 
+
 Widget customMessageBuilder(types.CustomMessage message,
     {required int messageWidth}) {
   if (message.metadata?['type'] == 'response') {
@@ -123,58 +124,103 @@ Widget customMessageBuilder(types.CustomMessage message,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (var property in properties)
-          Card(
-            color: Colors.white,
-            elevation: 6,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.all(8),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(property['title'] ?? 'Unknown',
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                      Icon(
-                        property['status'] == 'up'
-                            ? Icons.arrow_upward
-                            : Icons.arrow_downward,
-                        color: property['status'] == 'up'
-                            ? Colors.green
-                            : Colors.red,
-                      ),
-                    ],
-                  ),
-
-                  Text(property['address'] ?? 'Unknown',
-                      style: const TextStyle(color: Colors.grey)),
-                  
-                  const SizedBox(height: 8),
-
-                  Text(property['price'] ?? '\$0',
-                      style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold)),
-                  
-                  const SizedBox(height: 10),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("${property['beds']} Beds"),
-                      Text("${property['baths']} Baths"),
-                      Text(property['area'] ?? 'N/A'),
-                    ],
-                  ),
-                ],
+          Stack(
+            children: [
+              Positioned.fill(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.only(left: 20),
+                      child: const Icon(Icons.location_on_rounded, color: Colors.orange, size: 40),
+                    ),
+                    Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      child: const Icon(Icons.list_alt, color: Colors.blue, size: 40),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Dismissible(
+                  key: UniqueKey(),
+                  direction: DismissDirection.horizontal,
+                  // onUpdate: (details) {
+                  //   if (details.progress > 0.5) {
+                  //     ScaffoldMessenger.of(context).showSnackBar(
+                  //       SnackBar(
+                  //         content: Text(details.direction == DismissDirection.startToEnd
+                  //             ? 'Swiped Right'
+                  //             : 'Swiped Left'),
+                  //         backgroundColor: details.direction == DismissDirection.startToEnd
+                  //             ? Colors.green
+                  //             : Colors.red,
+                  //       ),
+                  //     );
+                  //   }
+                  // },
+                  confirmDismiss: (direction) async {
+                    return false; // Prevents card from disappearing
+                  },
+                  child: Card(
+                    color: Colors.white,
+                    elevation: 6,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    margin: const EdgeInsets.all(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(property['title'] ?? 'Unknown',
+                                  style: const TextStyle(
+                                      fontSize: 18, fontWeight: FontWeight.bold)),
+                              Icon(
+                                property['status'] == 'up'
+                                    ? Icons.arrow_upward
+                                    : Icons.arrow_downward,
+                                color: property['status'] == 'up'
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                            ],
+                          ),
+
+                          Text(property['address'] ?? 'Unknown',
+                              style: const TextStyle(color: Colors.grey)),
+
+                          const SizedBox(height: 8),
+
+                          Text(property['price'] ?? '\$0',
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.bold)),
+
+                          const SizedBox(height: 10),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("${property['beds']} Beds"),
+                              Text("${property['baths']} Baths"),
+                              Text(property['area'] ?? 'N/A'),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
 
         if (message.metadata?['message'] != null)
@@ -194,6 +240,8 @@ Widget customMessageBuilder(types.CustomMessage message,
 
   return const SizedBox.shrink(); // Return an empty widget if no match
 }
+
+
 
 
   Widget card(
