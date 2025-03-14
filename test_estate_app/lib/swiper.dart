@@ -11,25 +11,25 @@ class _SwiperPageState extends State<SwiperPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      extendBodyBehindAppBar: true, // Keeps app bar fixed at the top
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60),
+        preferredSize: const Size.fromHeight(60),
         child: AppBar(
           primary: false,
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          elevation: 200,
+          elevation: 0,
           flexibleSpace: Stack(
             children: [
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 0, top: 4, right: 0),
+                  padding: const EdgeInsets.only(left: 0, top: 4, right: 0),
                   child: Container(
                     height: 60,
                     width: 70,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Color.fromRGBO(143, 206, 157, 1),
                       borderRadius: BorderRadius.only(
                         topRight: Radius.circular(30),
@@ -37,7 +37,7 @@ class _SwiperPageState extends State<SwiperPage> {
                       ),
                     ),
                     child: IconButton(
-                      icon: Icon(
+                      icon: const Icon(
                         Icons.filter_alt_rounded,
                         color: Colors.black,
                         size: 35,
@@ -52,11 +52,11 @@ class _SwiperPageState extends State<SwiperPage> {
               Align(
                 alignment: Alignment.centerRight,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 0, top: 4, right: 0),
+                  padding: const EdgeInsets.only(left: 0, top: 4, right: 0),
                   child: Container(
                     height: 60,
                     width: 70,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Color.fromRGBO(143, 206, 157, 1),
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(30),
@@ -64,13 +64,13 @@ class _SwiperPageState extends State<SwiperPage> {
                       ),
                     ),
                     child: IconButton(
-                      icon: Icon(
+                      icon: const Icon(
                         Icons.star_rounded,
                         color: Colors.yellow,
                         size: 35,
                       ),
                       onPressed: () {
-                        // Add action for right button
+                        print("hi");
                       },
                     ),
                   ),
@@ -80,35 +80,38 @@ class _SwiperPageState extends State<SwiperPage> {
           ),
         ),
       ),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 60), // Prevent content from overlapping app bar
+        child: noHousesScreen(),
+      ),
     );
   }
 }
 
-
 Widget noHousesScreen() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Padding(
-            padding: EdgeInsets.all(10.0),
-            child: Text(
-              'Cant find anything with your filter!',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center
-            ),
+  return const Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Padding(
+          padding: EdgeInsets.all(10.0),
+          child: Text(
+            'Can’t find anything with your filter!',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
           ),
-          SizedBox(height: 25),
-          Padding(
-            padding: EdgeInsets.fromLTRB(20,0,20,150),
-            child: Text(
-              'Try changing your filters',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20),
-            ),
+        ),
+        SizedBox(height: 25),
+        Padding(
+          padding: EdgeInsets.fromLTRB(20, 0, 20, 150),
+          child: Text(
+            'Try changing your filters',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 20),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
