@@ -16,8 +16,9 @@ class RealEstateApp extends StatefulWidget {
   State<RealEstateApp> createState() => _RealEstateAppState();
 }
 
+// Add this to the class definition to enable animation
 class _RealEstateAppState extends State<RealEstateApp>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true; // Ensures the state is kept
 
@@ -28,7 +29,6 @@ class _RealEstateAppState extends State<RealEstateApp>
   List<dynamic> results = [];
   
   // Track which properties are showing map view
-  final Map<String, bool> _showMapView = {};
   
   // Track which property is being viewed in full screen
   String? _fullScreenPropertyId;
@@ -45,15 +45,29 @@ class _RealEstateAppState extends State<RealEstateApp>
   // Add these variables to the state class
   BitmapDescriptor? _customMarker;
   BitmapDescriptor? _nearbyMarker;
-  
-  // Track if maps are ready
-  bool _mapsInitialized = false;
+
+  // Add AnimationController and Animation to the state class
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   // Add this to initState method
   @override
   void initState() {
     super.initState();
     _initMarkers();
+    
+    // Initialize animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
     
     // Add a small delay and then send the first message to ensure maps are loaded
     Future.delayed(const Duration(milliseconds: 500), () {
@@ -64,21 +78,16 @@ class _RealEstateAppState extends State<RealEstateApp>
   }
 
   // Add this method to initialize custom markers
-  void _initMarkers() async {
-    try {
-      _customMarker = await _createCircleMarker(Colors.green, 40);
-      _nearbyMarker = await _createCircleMarker(Colors.blue, 40);
-      setState(() {
-        _mapsInitialized = true;
-      });
-    } catch (e) {
-      print("Error initializing markers: $e");
-      // Use default markers if custom ones fail
-      setState(() {
-        _mapsInitialized = true;
-      });
-    }
+void _initMarkers() async {
+  try {
+    _customMarker = await _createCircleMarker(Colors.green, 80);
+    _nearbyMarker = await _createCircleMarker(Colors.blue, 80);
+    setState(() {});
+  } catch (e) {
+    print("Error initializing markers: $e");
+    // Use default markers if custom ones fail
   }
+}
 
   void _sendCustomMessage() {
     Map<String, dynamic> input;
@@ -175,16 +184,21 @@ class _RealEstateAppState extends State<RealEstateApp>
       _fullScreenIsMapView = isMapView;
       _isMapInteractive = false; // Reset interactive mode when opening full screen
     });
+    _animationController.forward(from: 0.0);
   }
 
   // Close full screen property view
   void _closeFullScreenProperty() {
-    setState(() {
-      _fullScreenPropertyId = null;
-      _fullScreenProperty = null;
-      _isMapInteractive = false;
-    });
-  }
+  _animationController.reverse().then((value) {
+    if (mounted) {
+      setState(() {
+        _fullScreenPropertyId = null;
+        _fullScreenProperty = null;
+        _isMapInteractive = false;
+      });
+    }
+  });
+}
   
   // Toggle map interactive mode
   void _toggleMapInteractiveMode() {
@@ -222,8 +236,9 @@ class _RealEstateAppState extends State<RealEstateApp>
       controller?.dispose();
     }
     _fullScreenMapController?.dispose();
-    super.dispose();
-  }
+  _animationController.dispose();
+  super.dispose();
+}
 
   //FORMATING PRICE
   String formatPrice(int price) {
@@ -257,6 +272,7 @@ Future<BitmapDescriptor> _createCircleMarker(Color color, double size) async {
   return BitmapDescriptor.fromBytes(data!.buffer.asUint8List());
 }
 
+// Replace the customMessageBuilder method with this updated version
 Widget customMessageBuilder(types.CustomMessage message,
     {required int messageWidth}) {
   if (message.metadata?['type'] == 'response') {
@@ -271,59 +287,39 @@ Widget customMessageBuilder(types.CustomMessage message,
               // Generate a unique ID for this property
               final propertyId = '${property['title']}-${property['address']}';
               
-              // Initialize this property in the state maps if not already there
-              _showMapView.putIfAbsent(propertyId, () => false);
-              
-              return Stack(
-                children: [
-                  Positioned.fill(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          alignment: Alignment.centerLeft,
-                          padding: const EdgeInsets.only(left: 20),
-                          child: const Icon(Icons.location_on_rounded, color: Colors.orange, size: 40),
-                        ),
-                        Container(
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
-                          child: const Icon(Icons.list_alt, color: Colors.blue, size: 40),
-                        ),
-                      ],
-                    ),
+              return Padding(
+                padding: const EdgeInsets.all(8),
+                child: Dismissible(
+                  key: Key(propertyId),
+                  direction: DismissDirection.horizontal,
+                  onDismissed: (_) {
+                    // This won't be called because confirmDismiss returns false
+                  },
+                  confirmDismiss: (direction) async {
+                    // Show full screen view based on swipe direction
+                    _showFullScreenProperty(
+                      property, 
+                      propertyId, 
+                      direction == DismissDirection.startToEnd // Map if swiped right, details if swiped left
+                    );
+                    return false; // Prevents card from disappearing
+                  },
+                  // Background indicators for swipe direction
+                  background: Container(
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.only(left: 20),
+                    color: Colors.transparent,
+                    child: const Icon(Icons.map, color: Colors.orange, size: 40),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: GestureDetector(
-                      onHorizontalDragEnd: (details) {
-                        // Manual swipe handling
-                        if (details.primaryVelocity! > 0) {
-                          // Swiped right - show map
-                          setState(() {
-                            _showMapView[propertyId] = true;
-                          });
-                        } else if (details.primaryVelocity! < 0) {
-                          // Swiped left - show details
-                          setState(() {
-                            _showMapView[propertyId] = false;
-                          });
-                        }
-                      },
-                      onTap: () {
-                        // Show full screen view
-                        _showFullScreenProperty(
-                          property, 
-                          propertyId, 
-                          _showMapView[propertyId] ?? false
-                        );
-                      },
-                      child: _showMapView[propertyId]! 
-                          ? _buildMapView(property, propertyId, false)
-                          : _buildPropertyCard(property, propertyId, false),
-                    ),
+                  secondaryBackground: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    color: Colors.transparent,
+                    child: const Icon(Icons.home_rounded, color: Colors.blue, size: 40),
                   ),
-                ],
+                  // Removed the GestureDetector and directly using the property card
+                  child: _buildPropertyCard(property, propertyId, false),
+                ),
               );
             }
           ),
@@ -638,7 +634,7 @@ Widget _actionButton(IconData icon, String label) {
   );
 }
 
-// Completely rewritten map view to ensure it works in swipeable cards
+// Replace the _buildMapView method with this updated version
 Widget _buildMapView(dynamic property, String propertyId, bool isFullScreen) {
   // Get coordinates for the property
   final double lat = property['latitude'] ?? 37.7749;
@@ -648,7 +644,7 @@ Widget _buildMapView(dynamic property, String propertyId, bool isFullScreen) {
   // Create a set of markers
   Set<Marker> markers = {};
   
-  // Add marker for the property
+  // Add default marker if custom markers aren't loaded yet
   markers.add(
     Marker(
       markerId: MarkerId(propertyId),
@@ -687,77 +683,52 @@ Widget _buildMapView(dynamic property, String propertyId, bool isFullScreen) {
     color: Colors.white,
     elevation: isFullScreen ? 0 : 6,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-    ),
+        borderRadius: BorderRadius.circular(12)),
     margin: isFullScreen ? EdgeInsets.zero : const EdgeInsets.all(8),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Text(
-                "Location Map",
-                style: TextStyle(
-                  fontSize: isFullScreen ? 24 : 18, 
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  property['title'] ?? 'Unknown',
+    child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isFullScreen || !_isMapInteractive) 
+            Row(
+              children: [
+                Text(
+                  "Location Map",
                   style: TextStyle(
-                    fontSize: isFullScreen ? 16 : 14, 
-                    color: Colors.grey,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.right,
+                      fontSize: isFullScreen ? 24 : 18, 
+                      fontWeight: FontWeight.bold),
                 ),
-              ),
-            ],
-          ),
-        ),
-        
-        // Map container with fixed height
-        Container(
-          height: isFullScreen 
-              ? (_isMapInteractive ? 500 : 250)
-              : 180, // Fixed height for swipeable card
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    property['title'] ?? 'Unknown',
+                    style: TextStyle(
+                      fontSize: isFullScreen ? 16 : 14, 
+                      color: Colors.grey
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ],
+            ),
+          
+          SizedBox(height: (!isFullScreen || !_isMapInteractive) ? (isFullScreen ? 16 : 12) : 0),
+          
+          // Google Maps widget - takes full height when interactive
+          Container(
+            height: isFullScreen 
+                ? (_isMapInteractive 
+                    ? (isFullScreen ? 500 : 250) // Much taller in interactive mode
+                    : 250) 
+                : 150,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            clipBehavior: Clip.antiAlias,
             child: Stack(
               children: [
-                // Fallback UI in case map fails to load
-                // Container(
-                //   color: Colors.grey[200],
-                //   child: Center(
-                //     child: Column(
-                //       mainAxisAlignment: MainAxisAlignment.center,
-                //       children: [
-                //         Icon(
-                //           Icons.map,
-                //           size: 50,
-                //           color: Colors.grey[700],
-                //         ),
-                //         const SizedBox(height: 8),
-                //         Text(
-                //           'Loading map...',
-                //           style: TextStyle(
-                //             color: Colors.grey[700],
-                //           ),
-                //           textAlign: TextAlign.center,
-                //         ),
-                //       ],
-                //     ),
-                //   ),
-                // ),
-                
-                // Actual map
                 GoogleMap(
                   initialCameraPosition: CameraPosition(
                     target: propertyLocation,
@@ -796,195 +767,151 @@ Widget _buildMapView(dynamic property, String propertyId, bool isFullScreen) {
                       child: Icon(Icons.arrow_back, color: Colors.black),
                     ),
                   ),
-                
-                // Swipe indicator for card view
-                if (!isFullScreen)
-                  Positioned(
-                    bottom: 10,
-                    right: 10,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.swipe_left, size: 16, color: Colors.grey[700]),
-                          const SizedBox(width: 4),
-                          Text(
-                            "Swipe for details",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[700],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
-        ),
-        
-        // Property info below map
-        if (!isFullScreen || !_isMapInteractive)
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          
+          if (!isFullScreen || !_isMapInteractive) ...[
+            SizedBox(height: isFullScreen ? 16 : 10),
+            
+            Text(
+              "Nearby Properties",
+              style: TextStyle(
+                  fontSize: isFullScreen ? 18 : 16,
+                  fontWeight: FontWeight.bold),
+            ),
+                    
+            SizedBox(height: isFullScreen ? 12 : 8),
+            
+            Row(
               children: [
-                Text(
-                  "Nearby Properties",
-                  style: TextStyle(
-                    fontSize: isFullScreen ? 18 : 16,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    "3 similar properties nearby",
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: isFullScreen ? 16 : 14),
                   ),
                 ),
-                
-                const SizedBox(height: 8),
-                
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        "3 similar properties nearby",
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: isFullScreen ? 16 : 14),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        property['price'] ?? '\$0',
-                        style: TextStyle(
-                          fontSize: isFullScreen ? 16 : 14,
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.right,
-                      ),
-                    ),
-                  ],
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    property['price'] ?? '\$0',
+                    style: TextStyle(
+                        fontSize: isFullScreen ? 16 : 14,
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                  ),
                 ),
               ],
             ),
-          ),
-        
-        // Full screen content for map view
-        if (isFullScreen && !_isMapInteractive) ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+          
+          // Full screen content for map view
+          if (isFullScreen && !_isMapInteractive) ...[
+            const Divider(height: 32),
+            
+            // Nearby amenities
+            Text(
+              "Nearby Amenities",
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            
+            if (property['nearbyAmenities'] != null) ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (var amenity in property['nearbyAmenities'])
+                    Chip(
+                      label: Text(amenity),
+                      backgroundColor: Colors.blue.withOpacity(0.1),
+                      side: BorderSide(color: Colors.blue.withOpacity(0.3)),
+                    ),
+                ],
+              ),
+            ] else
+              Text("No nearby amenities information available."),
+            
+            const SizedBox(height: 24),
+            
+            // Similar properties
+            Text(
+              "Similar Properties",
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            
+            // List of similar properties
+            _similarPropertyItem(
+              "Modern Townhouse", 
+              "0.5 miles away", 
+              "\$${(int.parse(property['price'].toString().replaceAll(RegExp(r'[^\d]'), '')) * 0.9).round()}",
+              16
+            ),
+            const Divider(height: 16),
+            _similarPropertyItem(
+              "Spacious Condo", 
+              "0.8 miles away", 
+              "\$${(int.parse(property['price'].toString().replaceAll(RegExp(r'[^\d]'), '')) * 0.85).round()}",
+              16
+            ),
+            const Divider(height: 16),
+            _similarPropertyItem(
+              "Family Home", 
+              "1.2 miles away", 
+              "\$${(int.parse(property['price'].toString().replaceAll(RegExp(r'[^\d]'), '')) * 1.1).round()}",
+              16
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Call to action buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                const Divider(height: 32),
-                
-                // Nearby amenities
-                Text(
-                  "Nearby Amenities",
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Expanded(
+                  child: _actionButton(Icons.directions, "Get Directions"),
                 ),
-                const SizedBox(height: 12),
-                
-                if (property['nearbyAmenities'] != null) ...[
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (var amenity in property['nearbyAmenities'])
-                        Chip(
-                          label: Text(amenity),
-                          backgroundColor: Colors.blue.withOpacity(0.1),
-                          side: BorderSide(color: Colors.blue.withOpacity(0.3)),
-                        ),
-                    ],
-                  ),
-                ] else
-                  Text("No nearby amenities information available."),
-                
-                const SizedBox(height: 24),
-                
-                // Similar properties
-                Text(
-                  "Similar Properties",
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                
-                // List of similar properties
-                _similarPropertyItem(
-                  "Modern Townhouse", 
-                  "0.5 miles away", 
-                  "\$${(int.parse(property['price'].toString().replaceAll(RegExp(r'[^\d]'), '')) * 0.9).round()}",
-                  16
-                ),
-                const Divider(height: 16),
-                _similarPropertyItem(
-                  "Spacious Condo", 
-                  "0.8 miles away", 
-                  "\$${(int.parse(property['price'].toString().replaceAll(RegExp(r'[^\d]'), '')) * 0.85).round()}",
-                  16
-                ),
-                const Divider(height: 16),
-                _similarPropertyItem(
-                  "Family Home", 
-                  "1.2 miles away", 
-                  "\$${(int.parse(property['price'].toString().replaceAll(RegExp(r'[^\d]'), '')) * 1.1).round()}",
-                  16
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Call to action buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: _actionButton(Icons.directions, "Get Directions"),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _actionButton(Icons.explore, "Explore Area"),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // View property details button
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      // Switch to property details view
-                      setState(() {
-                        _fullScreenIsMapView = false;
-                      });
-                    },
-                    icon: Icon(Icons.home),
-                    label: Text("View Property Details"),
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      side: BorderSide(color: Colors.blue),
-                    ),
-                  ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _actionButton(Icons.explore, "Explore Area"),
                 ),
               ],
             ),
-          ),
+            
+            const SizedBox(height: 16),
+            
+            // View property details button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  // Switch to property details view
+                  setState(() {
+                    _fullScreenIsMapView = false;
+                  });
+                },
+                icon: Icon(Icons.home),
+                label: Text("View Property Details"),
+                style: OutlinedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(color: Colors.blue),
+                ),
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     ),
   );
 }
@@ -1033,122 +960,150 @@ Widget _similarPropertyItem(String title, String distance, String price, double 
   );
 }
 
-  // Large card overlay widget instead of full screen
-  Widget _buildFullScreenOverlay() {
-    if (_fullScreenPropertyId == null || _fullScreenProperty == null) {
-      return const SizedBox.shrink();
-    }
-    
-    // Calculate the card size based on screen dimensions
-    final screenSize = MediaQuery.of(context).size;
-    final cardWidth = screenSize.width * 0.9; // 90% of screen width
-    final cardHeight = screenSize.height * 0.75; // 75% of screen height
-    
-    // Get app bar height to position the card properly
-    final appBarHeight = 25.0; // Same as the PreferredSize in the Scaffold
-    final statusBarHeight = MediaQuery.of(context).padding.top;
-    final topPadding = appBarHeight + statusBarHeight + 10; // Extra padding to ensure visibility
-    
-    return Positioned.fill(
-      child: Material(
-        color: Colors.black54, // Semi-transparent background
-        child: Padding(
-          padding: EdgeInsets.only(top: topPadding),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: Container(
-              width: cardWidth,
-              height: _fullScreenIsMapView && _isMapInteractive 
-                  ? screenSize.height * 0.85  // Taller when map is interactive
-                  : cardHeight,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 15,
-                    spreadRadius: 5,
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // Header with close button
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
+// Update the _buildFullScreenOverlay method to use the animation
+Widget _buildFullScreenOverlay() {
+  if (_fullScreenPropertyId == null || _fullScreenProperty == null) {
+    return const SizedBox.shrink();
+  }
+  
+  // Calculate the card size based on screen dimensions
+  final screenSize = MediaQuery.of(context).size;
+  final cardWidth = screenSize.width * 0.9; // 90% of screen width
+  final cardHeight = screenSize.height * 0.75; // 75% of screen height
+  
+  // Get app bar height to position the card properly
+  final appBarHeight = 25.0; // Same as the PreferredSize in the Scaffold
+  final statusBarHeight = MediaQuery.of(context).padding.top;
+  final topPadding = appBarHeight + statusBarHeight + 10; // Extra padding to ensure visibility
+  
+  return AnimatedBuilder(
+    animation: _fadeAnimation,
+    builder: (context, child) {
+      return Positioned.fill(
+        child: Opacity(
+          opacity: _fadeAnimation.value,
+          child: Material(
+            color: Colors.black54.withOpacity(0.5 * _fadeAnimation.value), // Semi-transparent background
+            child: Padding(
+              padding: EdgeInsets.only(top: topPadding),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Container(
+                  width: cardWidth,
+                  height: _fullScreenIsMapView && _isMapInteractive 
+                      ? screenSize.height * 0.85  // Taller when map is interactive
+                      : cardHeight,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3 * _fadeAnimation.value),
+                        blurRadius: 15,
+                        spreadRadius: 5,
                       ),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.close),
-                          onPressed: _closeFullScreenProperty,
-                          iconSize: 24,
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Header with close button
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(16),
+                            topRight: Radius.circular(16),
+                          ),
                         ),
-                        if (!(_fullScreenIsMapView && _isMapInteractive))
-                          Text(
-                            _fullScreenProperty['title'] ?? 'Property Details',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.close),
+                              onPressed: _closeFullScreenProperty,
+                              iconSize: 24,
                             ),
-                          ),
-                        // Toggle view button
-                        if (!_isMapInteractive)
-                          TextButton.icon(
-                            onPressed: () {
-                              setState(() {
-                                _fullScreenIsMapView = !_fullScreenIsMapView;
-                                _isMapInteractive = false; // Reset interactive mode when switching views
-                              });
-                            },
-                            icon: Icon(
-                              _fullScreenIsMapView ? Icons.home : Icons.map,
-                              size: 18,
-                            ),
-                            label: Text(
-                              _fullScreenIsMapView ? "Details" : "Map",
-                              style: TextStyle(fontSize: 14),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  
-                  // Content
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(16),
-                        bottomRight: Radius.circular(16),
-                      ),
-                      child: _fullScreenIsMapView && _isMapInteractive
-                          ? _buildMapView(_fullScreenProperty, _fullScreenPropertyId!, true)
-                          : SingleChildScrollView(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: _fullScreenIsMapView
-                                    ? _buildMapView(_fullScreenProperty, _fullScreenPropertyId!, true)
-                                    : _buildPropertyCard(_fullScreenProperty, _fullScreenPropertyId!, true),
+                            if (!(_fullScreenIsMapView && _isMapInteractive))
+                              Text(
+                                _fullScreenProperty['title'] ?? 'Property Details',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
+                            // Toggle view button
+                            if (!_isMapInteractive)
+                              TextButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    _fullScreenIsMapView = !_fullScreenIsMapView;
+                                    _isMapInteractive = false; // Reset interactive mode when switching views
+                                  });
+                                },
+                                icon: Icon(
+                                  _fullScreenIsMapView ? Icons.home : Icons.map,
+                                  size: 18,
+                                  color: Colors.green[900],
+                                ),
+                                label: Text(
+                                  _fullScreenIsMapView ? "Details" : "Map",
+                                  style: TextStyle(fontSize: 14, color: Colors.green[900]), 
+                                  
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Content
+                      Expanded(
+                        child: GestureDetector(
+                          onHorizontalDragEnd: (details) {
+                            // Only handle swipe if not in interactive map mode
+                            if (!_isMapInteractive) {
+                              if (details.primaryVelocity! > 0) {
+                                // Swiped right - show map
+                                setState(() {
+                                  _fullScreenIsMapView = true;
+                                });
+                              } else if (details.primaryVelocity! < 0) {
+                                // Swiped left - show details
+                                setState(() {
+                                  _fullScreenIsMapView = false;
+                                });
+                              }
+                            }
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(16),
+                              bottomRight: Radius.circular(16),
                             ),
-                    ),
+                            child: _fullScreenIsMapView && _isMapInteractive
+                                ? _buildMapView(_fullScreenProperty, _fullScreenPropertyId!, true)
+                                : SingleChildScrollView(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: _fullScreenIsMapView
+                                          ? _buildMapView(_fullScreenProperty, _fullScreenPropertyId!, true)
+                                          : _buildPropertyCard(_fullScreenProperty, _fullScreenPropertyId!, true),
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    },
+  );
+}
 
   Widget card(
     String title,
