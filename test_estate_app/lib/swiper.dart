@@ -171,7 +171,7 @@ class _SwiperPageState extends State<SwiperPage> {
                 children: [
                   FloatingActionButton(
                     heroTag: 'reject',
-                    backgroundColor: Colors.white,
+                    backgroundColor: Color.fromRGBO(143, 206, 157, 1),
                     onPressed: () {
                       controller.swipe(CardSwiperDirection.left);
                     },
@@ -179,7 +179,7 @@ class _SwiperPageState extends State<SwiperPage> {
                   ),
                   FloatingActionButton(
                     heroTag: 'undo',
-                    backgroundColor: Colors.white,
+                    backgroundColor: Color.fromRGBO(143, 206, 157, 1),
                     onPressed: () {
                       controller.undo();
                     },
@@ -188,7 +188,7 @@ class _SwiperPageState extends State<SwiperPage> {
                   ),
                   FloatingActionButton(
                     heroTag: 'accept',
-                    backgroundColor: Colors.white,
+                    backgroundColor: Color.fromRGBO(143, 206, 157, 1),
                     onPressed: () {
                       controller.swipe(CardSwiperDirection.right);
                     },
@@ -285,20 +285,20 @@ class PropertyCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Colors.green,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       address,
-                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildFeature(Icons.bed, '$bedrooms Beds'),
-                        _buildFeature(Icons.bathroom, '$bathrooms Baths'),
+                        _buildFeature(Icons.bathtub, '$bathrooms Baths'),
                         _buildFeature(Icons.square_foot, area),
                       ],
                     ),
@@ -315,11 +315,11 @@ class PropertyCard extends StatelessWidget {
   Widget _buildFeature(IconData icon, String text) {
     return Column(
       children: [
-        Icon(icon, color: Colors.black),
+        Icon(icon),
         const SizedBox(height: 4),
         Text(
           text,
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(),
         ),
       ],
     );
