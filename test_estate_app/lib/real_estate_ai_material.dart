@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 
 // Import Uint8List for custom marker creation
 import 'dart:ui' as ui;
-import 'dart:typed_data';
 
 class RealEstateApp extends StatefulWidget {
   const RealEstateApp({super.key});
@@ -1286,4 +1285,3 @@ Widget _buildFullScreenOverlay() {
     );
   }
 }
-

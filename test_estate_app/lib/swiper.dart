@@ -77,12 +77,16 @@ class _SwiperPageState extends State<SwiperPage> {
                 ),
               ),
             ],
+            
           ),
         ),
       ),
+      
     );
   }
 }
+
+
 
 
 Widget noHousesScreen() {
