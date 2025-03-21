@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
-import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
 class SwiperPage extends StatefulWidget {
   const SwiperPage({super.key});
@@ -229,7 +228,7 @@ class PropertyCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
+        children: [ 
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: ClipRRect(
@@ -269,10 +268,10 @@ class PropertyCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                    topLeft: Radius.circular(30),
-                    bottomLeft: Radius.circular(30),
+                    topRight: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                    topLeft: Radius.circular(20),
+                    bottomLeft: Radius.circular(20),
                   ),
                 ),
               child: Padding(

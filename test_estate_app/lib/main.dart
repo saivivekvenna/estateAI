@@ -43,10 +43,10 @@ class _MyAppState extends State<MyApp> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildTabIcon(Icons.search, 0, Colors.grey),
+                      _buildTabIcon(Icons.search, 0, Colors.white),
                       _buildTabIcon(
-                          Icons.swipe_down_rounded, 1, Colors.grey),
-                      _buildTabIcon(Icons.notifications, 2, Colors.grey),
+                          Icons.swipe_down_rounded, 1, Colors.white),
+                      _buildTabIcon(Icons.notifications, 2, Colors.white),
                     ],
                   ),
                 ),
