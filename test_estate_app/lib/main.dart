@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:test_estate_app/real_estate_ai_material.dart';
+import 'package:test_estate_app/chat_page.dart';
 import 'package:test_estate_app/swiper.dart';
 import 'package:test_estate_app/noti_page.dart';
 
