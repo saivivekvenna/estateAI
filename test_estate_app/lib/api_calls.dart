@@ -1,4 +1,8 @@
-//each call for diffrent endpoint for server 
+/*each call for diffrent endpoint for server. three endpoints right now, 
+1. basic chat operation
+2. swipe for location to show similar properties 
+3. swipe to see more info to show images 
+*/
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;

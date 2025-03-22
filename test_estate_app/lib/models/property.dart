@@ -1,4 +1,4 @@
-//object for every property so i dont have to work with arrays 24/7
+//object for every property so i dont have to work with arrays 24/7, god bless object orinented programming 
 class Property {
   final String? photoURL;
   final String address;
