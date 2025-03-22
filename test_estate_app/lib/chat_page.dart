@@ -860,36 +860,36 @@ class _RealEstateAppState extends State<RealEstateApp>
 
               const SizedBox(height: 24),
 
-              // // Similar properties
-              // Text(
-              //   "Similar Properties",
-              //   style: const TextStyle(
-              //     fontSize: 18,
-              //     fontWeight: FontWeight.bold,
-              //   ),
-              // ),
-              // const SizedBox(height: 12),
+              // Similar properties
+              Text(
+                "Similar Properties",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
 
-              // // List of similar properties
-              // _similarPropertyItem(
-              //     "Modern Townhouse",
-              //     "0.5 miles away",
-              //     "\$${(int.parse(property['price'].toString().replaceAll(RegExp(r'[^\d]'), '')) * 0.9).round()}",
-              //     16),
-              // const Divider(height: 16),
-              // _similarPropertyItem(
-              //     "Spacious Condo",
-              //     "0.8 miles away",
-              //     "\$${(int.parse(property['price'].toString().replaceAll(RegExp(r'[^\d]'), '')) * 0.85).round()}",
-              //     16),
-              // const Divider(height: 16),
-              // _similarPropertyItem(
-              //     "Family Home",
-              //     "1.2 miles away",
-              //     "\$${(int.parse(property['price'].toString().replaceAll(RegExp(r'[^\d]'), '')) * 1.1).round()}",
-              //     16),
+              // List of similar properties
+              _similarPropertyItem(
+                  "Modern Townhouse",
+                  "0.5 miles away",
+                  "\$${(int.parse(property['price'].toString().replaceAll(RegExp(r'[^\d]'), '')) * 0.9).round()}",
+                  16),
+              const Divider(height: 16),
+              _similarPropertyItem(
+                  "Spacious Condo",
+                  "0.8 miles away",
+                  "\$${(int.parse(property['price'].toString().replaceAll(RegExp(r'[^\d]'), '')) * 0.85).round()}",
+                  16),
+              const Divider(height: 16),
+              _similarPropertyItem(
+                  "Family Home",
+                  "1.2 miles away",
+                  "\$${(int.parse(property['price'].toString().replaceAll(RegExp(r'[^\d]'), '')) * 1.1).round()}",
+                  16),
 
-              // const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
               // Call to action buttons
               Row(
