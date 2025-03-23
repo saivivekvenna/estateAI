@@ -382,21 +382,21 @@ class _RealEstateAppState extends State<RealEstateApp>
       });
 
       // Call more properties API
-      final response = await _apiCalls.getSimilarProperties(property.toJson());
+      // final response = await _apiCalls.getSimilarProperties(property.toJson());
 
-      // Extract properties
-      final propertyResults = response['results'] as List<dynamic>;
+      // // Extract properties
+      // final propertyResults = response['results'] as List<dynamic>;
 
-      // Convert to Property objects
-      final similarProperties =
-          propertyResults.map((json) => Property.fromJson(json)).toList();
+      // // Convert to Property objects
+      // final similarProperties =
+      //     propertyResults.map((json) => Property.fromJson(json)).toList();
 
       // Show map view with similar properties
       _showFullScreenProperty(property, property.zpid, true);
 
       // Add similar properties to state
       setState(() {
-        _properties = [..._properties, ...similarProperties];
+        //_properties = [..._properties, ...similarProperties];
       });
     } catch (e) {
       print('Error getting similar properties: $e');
