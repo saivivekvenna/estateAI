@@ -10,7 +10,7 @@ class Property {
   final String? lotAreaUnit;
   final String? yearBuilt;
   final String? zillowLink;
-  final String? propertyType;
+  final String propertyType;
   final String? listingStatus;
   final dynamic daysOnZillow;
   final String zpid;
@@ -28,8 +28,8 @@ class Property {
   final bool? isForeclosed;
   final bool? isPreForeclosure;
   
-  // Computed property for status (up/down)
-  String get status => daysOnZillow != null && daysOnZillow < 7 ? 'up' : 'down';
+  // // Computed property for status (up/down)
+  // String get status => daysOnZillow != null && daysOnZillow < 7 ? 'up' : 'down';
   
   // Computed property for formatted living area
   String get formattedLivingArea {
@@ -48,7 +48,7 @@ class Property {
     this.lotAreaUnit,
     this.yearBuilt,
     this.zillowLink,
-    this.propertyType,
+    required this.propertyType,
     this.listingStatus,
     this.daysOnZillow,
     required this.zpid,

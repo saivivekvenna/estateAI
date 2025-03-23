@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 
 class ApiCalls {
   // Base URL for your backend server
-  final String baseUrl = 'http://10.0.2.2:5000'; // Use this for Android emulator
+  final String baseUrl = 'http://localhost:5000'; // Use this for Android emulator
   // Use 'http://localhost:5000' for iOS simulator or web
   // Use your actual server IP address for physical devices
 
