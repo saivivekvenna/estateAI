@@ -6,6 +6,7 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:math';
 
 class ApiCalls {
   // Base URL for your backend server
@@ -41,25 +42,35 @@ class ApiCalls {
 
   // Images endpoint - retrieves property images (left swipe)
   Future<Map<String, dynamic>> getPropertyImages(String propertyId) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/images'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'zpid': propertyId,
-        }),
-      );
+  try {
+    print('Requesting images for property ID: $propertyId');
+    
+    final response = await http.post(
+      Uri.parse('$baseUrl/images'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'zpid': propertyId,
+      }),
+    );
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception('Failed to get property images: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error getting property images: $e');
-      throw Exception('Network error: $e');
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      
+      // Log the response for debugging
+      print('Images API response: ${response.body.substring(0, min(100, response.body.length))}...');
+      print('Number of images received: ${data['images']?.length ?? 0}');
+      
+      return data;
+    } else {
+      print('Failed to get property images. Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      throw Exception('Failed to get property images: ${response.statusCode}');
     }
+  } catch (e) {
+    print('Error getting property images: $e');
+    throw Exception('Network error: $e');
   }
+}
 
   // More properties endpoint - finds similar properties (right swipe)
   Future<Map<String, dynamic>> getSimilarProperties(Map<String, dynamic> propertyData) async {

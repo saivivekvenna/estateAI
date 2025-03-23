@@ -1,6 +1,7 @@
 //object for every property so i dont have to work with arrays 24/7, god bless object orinented programming 
 class Property {
   final String? photoURL;
+  final List<String> imageUrls;
   final String address;
   final String price;
   final dynamic bedrooms;
@@ -65,39 +66,47 @@ class Property {
     this.is3dHome,
     this.isForeclosed,
     this.isPreForeclosure,
+    this.imageUrls = const [],
   });
 
   factory Property.fromJson(Map<String, dynamic> json) {
-    return Property(
-      photoURL: json['photoURL'],
-      address: json['address'] ?? 'Unknown Address',
-      price: json['price'] ?? '\$0',
-      bedrooms: json['bedrooms'] ?? '--',
-      bathrooms: json['bathrooms'] ?? '--',
-      livingArea: json['livingArea'] ?? '--',
-      lotAreaValue: json['lotAreaValue'],
-      lotAreaUnit: json['lotAreaUnit'],
-      yearBuilt: json['yearBuilt'],
-      zillowLink: json['zillowLink'],
-      propertyType: json['propertyType'],
-      listingStatus: json['listingStatus'],
-      daysOnZillow: json['daysOnZillow'],
-      zpid: json['zpid'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      latitude: json['latitude'] != null ? double.parse(json['latitude'].toString()) : null,
-      longitude: json['longitude'] != null ? double.parse(json['longitude'].toString()) : null,
-      hasPool: json['hasPool'],
-      hasAirConditioning: json['hasAirConditioning'],
-      hasGarage: json['hasGarage'],
-      parkingSpots: json['parkingSpots'],
-      isCityView: json['isCityView'],
-      isMountainView: json['isMountainView'],
-      isWaterView: json['isWaterView'],
-      isParkView: json['isParkView'],
-      is3dHome: json['is3dHome'],
-      isForeclosed: json['isForeclosed'],
-      isPreForeclosure: json['isPreForeclosure'],
-    );
+  // Handle imageUrls if present in the JSON
+  List<String> imageUrls = [];
+  if (json['imageUrls'] != null) {
+    imageUrls = List<String>.from(json['imageUrls']);
   }
+  
+  return Property(
+    photoURL: json['photoURL'],
+    address: json['address'] ?? 'Unknown Address',
+    price: json['price'] ?? '\$0',
+    bedrooms: json['bedrooms'] ?? '--',
+    bathrooms: json['bathrooms'] ?? '--',
+    livingArea: json['livingArea'] ?? '--',
+    lotAreaValue: json['lotAreaValue'],
+    lotAreaUnit: json['lotAreaUnit'],
+    yearBuilt: json['yearBuilt'],
+    zillowLink: json['zillowLink'],
+    propertyType: json['propertyType'] ?? 'Property',
+    listingStatus: json['listingStatus'],
+    daysOnZillow: json['daysOnZillow'],
+    zpid: json['zpid'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+    latitude: json['latitude'] != null ? double.parse(json['latitude'].toString()) : null,
+    longitude: json['longitude'] != null ? double.parse(json['longitude'].toString()) : null,
+    hasPool: json['hasPool'],
+    hasAirConditioning: json['hasAirConditioning'],
+    hasGarage: json['hasGarage'],
+    parkingSpots: json['parkingSpots'],
+    isCityView: json['isCityView'],
+    isMountainView: json['isMountainView'],
+    isWaterView: json['isWaterView'],
+    isParkView: json['isParkView'],
+    is3dHome: json['is3dHome'],
+    isForeclosed: json['isForeclosed'],
+    isPreForeclosure: json['isPreForeclosure'],
+    imageUrls: imageUrls,
+  );
+}
 
   Map<String, dynamic> toJson() {
     return {
@@ -128,6 +137,7 @@ class Property {
       'is3dHome': is3dHome,
       'isForeclosed': isForeclosed,
       'isPreForeclosure': isPreForeclosure,
+      'imageUrls': imageUrls,
     };
   }
 }

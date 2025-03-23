@@ -88,17 +88,17 @@ class _RealEstateAppState extends State<RealEstateApp>
   }
 
   String formatPropertyType(String propertyType) {
-  const propertyTypeMap = {
-    'SINGLE_FAMILY': 'Single Family',
-    'TOWNHOUSE': 'Townhouse',
-    'CONDO': 'Condo',
-    'MULTIFAMILY': 'Multi Family',
-    // Add other mappings as needed
-  };
+    const propertyTypeMap = {
+      'SINGLE_FAMILY': 'Single Family',
+      'TOWNHOUSE': 'Townhouse',
+      'CONDO': 'Condo',
+      'MULTIFAMILY': 'Multi Family',
+      // Add other mappings as needed
+    };
 
-  return propertyTypeMap[propertyType] ?? propertyType;  // Return the original if no mapping is found
-}
-
+    return propertyTypeMap[propertyType] ??
+        propertyType; // Return the original if no mapping is found
+  }
 
   Future<BitmapDescriptor> _createCircleMarker(Color color, double size) async {
     final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
@@ -134,6 +134,29 @@ class _RealEstateAppState extends State<RealEstateApp>
 
     setState(() {
       _messages.insert(0, textMessage);
+    });
+  }
+
+  void _addCombinedResponse(List<Property> properties, String agentResponse) {
+    if (properties.isEmpty) {
+      _addBotTextMessage(
+          "I couldn't find any properties matching your criteria. Could you try with different requirements?");
+      return;
+    }
+
+    final customMessage = types.CustomMessage(
+      author: _otherUser,
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      metadata: {
+        'type': 'combined_response',
+        'properties': properties.map((p) => p.toJson()).toList(),
+        'agentResponse': agentResponse,
+      },
+    );
+
+    setState(() {
+      _messages.insert(0, customMessage);
     });
   }
 
@@ -191,11 +214,29 @@ class _RealEstateAppState extends State<RealEstateApp>
         _properties =
             propertyResults.map((json) => Property.fromJson(json)).toList();
 
-        // Add properties response
-        _addPropertiesResponse(_properties);
+        // Add combined response (properties + agent text)
+        _addCombinedResponse(_properties, agentResponse);
 
-        // Add agent response
-        _addBotTextMessage(agentResponse);
+        // // Extract agent response and properties
+        // final agentResponse = response['agentResponse'] as String?;
+        // if (agentResponse == null) {
+        //   throw Exception("Agent response missing in API response");
+        // }
+
+        // final propertyResults = response['results'] as List<dynamic>?;
+        // if (propertyResults == null || propertyResults.isEmpty) {
+        //   throw Exception("No property results found");
+        // }
+
+        // // Convert to Property objects
+        // _properties =
+        //     propertyResults.map((json) => Property.fromJson(json)).toList();
+
+        // // Add properties response
+        // _addPropertiesResponse(_properties);
+
+        // // Add agent response
+        // _addBotTextMessage(agentResponse);
       } catch (apiError) {
         // Handle API-specific errors
         print('Error with API request: $apiError');
@@ -277,24 +318,55 @@ class _RealEstateAppState extends State<RealEstateApp>
     });
   }
 
-  // Handle left swipe - get more images and details
   void _handleLeftSwipe(Property property) async {
     try {
       setState(() {
         _isLoading = true;
       });
 
-      // Call images API
-      final response = _apiCalls.getPropertyImages(property.zpid);
+      // Call images API and await the response
+      final response = await _apiCalls.getPropertyImages(property.zpid);
+
+      // Create a new property with the updated image URLs
+      Property updatedProperty = property;
+      
+      // Extract image URLs from response
+      if (response != null && response['images'] != null) {
+        final List<dynamic> imageData = response['images'] as List<dynamic>;
+        
+        // Check the structure of the image data
+        if (imageData.isNotEmpty) {
+          List<String> imageUrls = [];
+          
+          // Try to extract URLs based on the response structure
+          for (var img in imageData) {
+            if (img is Map<String, dynamic> && img.containsKey('url')) {
+              imageUrls.add(img['url'] as String);
+            } else if (img is String) {
+              imageUrls.add(img);
+            }
+          }
+          
+          if (imageUrls.isNotEmpty) {
+            // Create a new property with the updated image URLs
+            Map<String, dynamic> propertyJson = property.toJson();
+            propertyJson['imageUrls'] = imageUrls;
+            updatedProperty = Property.fromJson(propertyJson);
+          }
+        }
+      }
 
       // Show property details with images
-      _showFullScreenProperty(property, property.zpid, false);
-
-      // TODO: Update the property with additional details from response
+      _showFullScreenProperty(updatedProperty, updatedProperty.zpid, false);
     } catch (e) {
       print('Error getting property images: $e');
-      _addBotTextMessage(
-          'Sorry, I encountered an error while getting property details.');
+      // Show an error message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load property images: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -345,24 +417,32 @@ class _RealEstateAppState extends State<RealEstateApp>
     super.dispose();
   }
 
-  // Custom message builder for property cards
   Widget customMessageBuilder(types.CustomMessage message,
       {required int messageWidth}) {
-    if (message.metadata?['type'] == 'response') {
+    if (message.metadata?['type'] == 'response' ||
+        message.metadata?['type'] == 'combined_response') {
       List<dynamic> propertiesJson = message.metadata?['properties'] ?? [];
       List<Property> properties = propertiesJson
           .map((json) => json is Property ? json : Property.fromJson(json))
           .toList();
-
+      String? agentResponse;
+      if (message.metadata != null &&
+          message.metadata!['type'] == 'combined_response' &&
+          message.metadata!.containsKey('agentResponse')) {
+        agentResponse = message.metadata!['agentResponse'] as String?;
+      } else {
+        agentResponse = null;
+      }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Properties section
           for (var property in properties)
             Builder(builder: (context) {
               final propertyId = property.zpid;
 
               return Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
                 child: Dismissible(
                   key: Key(propertyId),
                   direction: DismissDirection.horizontal,
@@ -400,14 +480,29 @@ class _RealEstateAppState extends State<RealEstateApp>
                 ),
               );
             }),
+
+          // Agent response text (only for combined type)
+          if (agentResponse != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+              child: Container(
+                padding: const EdgeInsets.all(0),
+                decoration: BoxDecoration(
+                  color: const Color.fromRGBO(52, 99, 56, 1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  agentResponse,
+                  style: const TextStyle(color: Colors.white, fontSize: 17),
+                ),
+              ),
+            ),
         ],
       );
     }
 
     return const SizedBox.shrink();
   }
-
-  
 
   // Build property card
   Widget _buildPropertyCard(
@@ -540,20 +635,32 @@ class _RealEstateAppState extends State<RealEstateApp>
               ),
               const SizedBox(height: 12),
 
-              SizedBox(
-                height: 200,
-                child: property.photoURL != null
-                    ? Image.network(
-                        property.photoURL!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildPlaceholderGallery();
-                        },
-                      )
-                    : _buildPlaceholderGallery(),
-              ),
+              _buildPhotoGallery(property),
 
-              const SizedBox(height: 24),
+              // // Image gallery
+              // Text(
+              //   "Photos",
+              //   style: const TextStyle(
+              //     fontSize: 18,
+              //     fontWeight: FontWeight.bold,
+              //   ),
+              // ),
+              // const SizedBox(height: 12),
+
+              // SizedBox(
+              //   height: 200,
+              //   child: property.photoURL != null
+              //       ? Image.network(
+              //           property.photoURL!,
+              //           fit: BoxFit.cover,
+              //           errorBuilder: (context, error, stackTrace) {
+              //             return _buildPlaceholderGallery();
+              //           },
+              //         )
+              //       : _buildPlaceholderGallery(),
+              // ),
+
+              // const SizedBox(height: 24),
 
               // Property description
               Text(
@@ -600,7 +707,10 @@ class _RealEstateAppState extends State<RealEstateApp>
                       children: [
                         _detailRow("School District", "Local District", 16),
                         _detailRow(
-                            "Type", property.propertyType ?? "Residential", 16),
+                            "Type",
+                            formatPropertyType(property.propertyType) ??
+                                "Residential",
+                            16),
                       ],
                     ),
                   ),
@@ -678,6 +788,121 @@ class _RealEstateAppState extends State<RealEstateApp>
     );
   }
 
+  Widget _buildPhotoGallery(Property property) {
+    // If no images are available, show placeholders
+    if (property.imageUrls.isEmpty && property.photoURL == null) {
+      return _buildPlaceholderGallery();
+    }
+
+    // Combine main photo and additional images
+    List<String> allImages = [];
+    if (property.photoURL != null) {
+      allImages.add(property.photoURL!);
+    }
+    allImages.addAll(property.imageUrls);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 200,
+          child: PageView.builder(
+            itemCount: allImages.length,
+            itemBuilder: (context, index) {
+              return Container(
+                margin: EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      allImages[index],
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[300],
+                          child: Center(
+                            child: Icon(
+                              Icons.error_outline,
+                              size: 50,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: Colors.grey[200],
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                              color: Color.fromRGBO(27, 94, 32, 1),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    // Image counter indicator
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          "${index + 1}/${allImages.length}",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        SizedBox(
+          height: 20,),
+        // Image pagination indicators
+        // if (allImages.length > 1)
+        //   Padding(
+        //     padding: const EdgeInsets.only(top: 8.0),
+        //     child: Row(
+        //       mainAxisAlignment: MainAxisAlignment.center,
+        //       children: List.generate(
+        //         allImages.length,
+        //         (index) => Container(
+        //           width: 8,
+        //           height: 8,
+        //           margin: EdgeInsets.symmetric(horizontal: 4),
+        //           decoration: BoxDecoration(
+        //             shape: BoxShape.circle,
+        //             color: index == 0
+        //                 ? Color.fromRGBO(27, 94, 32, 1)
+        //                 : Colors.grey[400],
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+      ],
+    );
+  }
+
   Widget _detailRow(String label, String value, double fontSize) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -732,7 +957,7 @@ class _RealEstateAppState extends State<RealEstateApp>
         icon: _customMarker ??
             BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
         infoWindow: InfoWindow(
-          title: property.propertyType ?? 'Property',
+          title: formatPropertyType(property.propertyType) ?? 'Property',
           snippet: property.price,
         ),
       ),
@@ -753,7 +978,8 @@ class _RealEstateAppState extends State<RealEstateApp>
                   BitmapDescriptor.defaultMarkerWithHue(
                       BitmapDescriptor.hueAzure),
               infoWindow: InfoWindow(
-                title: nearbyProperty.propertyType ?? 'Property',
+                title: formatPropertyType(nearbyProperty.propertyType) ??
+                    'Property',
                 snippet: nearbyProperty.price,
               ),
             ),
@@ -994,7 +1220,8 @@ class _RealEstateAppState extends State<RealEstateApp>
                               ),
                               if (!(_fullScreenIsMapView && _isMapInteractive))
                                 Text(
-                                  _fullScreenProperty!.propertyType ??
+                                  formatPropertyType(
+                                          _fullScreenProperty!.propertyType) ??
                                       'Property Details',
                                   style: TextStyle(
                                     fontSize: 18,
@@ -1209,3 +1436,4 @@ class _RealEstateAppState extends State<RealEstateApp>
     );
   }
 }
+
