@@ -93,7 +93,7 @@ class _RealEstateAppState extends State<RealEstateApp>
       'TOWNHOUSE': 'Townhouse',
       'CONDO': 'Condo',
       'MULTIFAMILY': 'Multi Family',
-      // Add other mappings as needed
+      'APARTMENT': 'Apartment',
     };
 
     return propertyTypeMap[propertyType] ??
@@ -1436,4 +1436,3 @@ class _RealEstateAppState extends State<RealEstateApp>
     );
   }
 }
-

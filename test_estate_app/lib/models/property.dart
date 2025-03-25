@@ -29,9 +29,6 @@ class Property {
   final bool? isForeclosed;
   final bool? isPreForeclosure;
   
-  // // Computed property for status (up/down)
-  // String get status => daysOnZillow != null && daysOnZillow < 7 ? 'up' : 'down';
-  
   // Computed property for formatted living area
   String get formattedLivingArea {
     if (livingArea == null || livingArea == '--') return 'N/A';
