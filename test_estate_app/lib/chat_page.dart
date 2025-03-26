@@ -717,14 +717,22 @@ class _RealEstateAppState extends State<RealEstateApp>
 
       // Show placeholder page for the property
       _showFullScreenProperty(property, property.zpid, false, true);
-    } catch (e) {
-      print('Error showing placeholder page: $e');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    
+    // Set loading to false after a short delay to allow the FutureBuilder to handle the loading state
+    Future.delayed(Duration(milliseconds: 100), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
+  } catch (e) {
+    print('Error showing placeholder page: $e');
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
 
   @override
   void dispose() {
@@ -957,94 +965,359 @@ class _RealEstateAppState extends State<RealEstateApp>
   }
 
   // Build placeholder page
-  Widget _buildPlaceholderPage(Property property, String propertyId) {
-    return Card(
-      color: Colors.white,
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Text(
-              "Similar Properties",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+Widget _buildPlaceholderPage(Property property, String propertyId) {
+  return Card(
+    color: Colors.white,
+    elevation: 0,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    margin: EdgeInsets.zero,
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Text(
+            "Similar Properties",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
             ),
-            SizedBox(height: 8),
-            Text(
-              "Properties like ${property.address}",
-              style: TextStyle(
-                color: Colors.grey[700],
-                fontSize: 16,
-              ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            "Properties like ${property.address}",
+            style: TextStyle(
+              color: Colors.grey[700],
+              fontSize: 16,
             ),
-            
-            Divider(height: 32),
-            
-            // Placeholder content
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(height: 45),
-                  Icon(
-                    Icons.home_work_outlined,
-                    size: 100,
-                    color: Colors.grey[400],
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    "Finding similar properties...",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[700],
+          ),
+          
+          Divider(height: 32),
+          
+          // Loading state initially
+          if (_isLoading)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.home_work_outlined,
+                      size: 80,
+                      color: Colors.grey[400],
                     ),
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    "We're searching for properties that match your preferences based on this property.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
+                    SizedBox(height: 20),
+                    Text(
+                      "Finding similar properties...",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[700],
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 40),
-                  CircularProgressIndicator(
-                    color: Color.fromRGBO(27, 94, 32, 1),
-                  ),
-                ],
-              ),
-            ),
-            
-            Spacer(),
-            
-            // Return button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _closeFullScreenProperty,
-                icon: Icon(Icons.arrow_back),
-                label: Text("Return to Chat"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromRGBO(27, 94, 32, 1),
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                    SizedBox(height: 20),
+                    CircularProgressIndicator(
+                      color: Color.fromRGBO(27, 94, 32, 1),
+                    ),
+                  ],
                 ),
               ),
+            )
+          else
+            Expanded(
+              child: FutureBuilder<Map<String, dynamic>>(
+                future: _apiCalls.getSimilarProperties(property.toJson()),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: Color.fromRGBO(27, 94, 32, 1),
+                      ),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 60,
+                            color: Colors.red[300],
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            "Error loading similar properties",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            snapshot.error.toString(),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.red[700]),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else if (!snapshot.hasData || 
+                            snapshot.data == null || 
+                            snapshot.data!['results'] == null ||
+                            (snapshot.data!['results'] as List).isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 60,
+                            color: Colors.grey[400],
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            "No similar properties found",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    // Convert the results to Property objects
+                    final List<dynamic> propertyResults = snapshot.data!['results'] as List;
+                    final List<Property> similarProperties = propertyResults
+                        .map((json) => Property.fromJson(json))
+                        .toList();
+                    
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Property count
+                        Text(
+                          "${similarProperties.length} similar properties found",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color.fromRGBO(27, 94, 32, 1),
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        
+                        // Horizontal scrolling property list
+                        Expanded(
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: similarProperties.length,
+                            itemBuilder: (context, index) {
+                              final similarProperty = similarProperties[index];
+                              return Container(
+                                width: 280,
+                                margin: EdgeInsets.only(right: 16),
+                                child: GestureDetector(
+                                  // Double tap to add to chat
+                                  onDoubleTap: () {
+                                    // Add property to chat and select it
+                                    _selectProperty(similarProperty, similarProperty.zpid);
+                                    
+                                    // Show a confirmation message
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Property selected for discussion'),
+                                        backgroundColor: Colors.green,
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                    
+                                    // Close the full screen view
+                                    _closeFullScreenProperty();
+                                  },
+                                  // Long press to see more details
+                                  onLongPress: () {
+                                    // Show property details
+                                    _showFullScreenProperty(
+                                      similarProperty, 
+                                      similarProperty.zpid, 
+                                      false, 
+                                      false
+                                    );
+                                  },
+                                  child: Card(
+                                    elevation: 4,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Property image
+                                        Container(
+                                          height: 160,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.only(
+                                              topLeft: Radius.circular(12),
+                                              topRight: Radius.circular(12),
+                                            ),
+                                            image: similarProperty.photoURL != null
+                                                ? DecorationImage(
+                                                    image: NetworkImage(similarProperty.photoURL!),
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : null,
+                                            color: Colors.grey[300],
+                                          ),
+                                          child: similarProperty.photoURL == null
+                                              ? Center(
+                                                  child: Icon(
+                                                    Icons.home,
+                                                    size: 60,
+                                                    color: Colors.grey[500],
+                                                  ),
+                                                )
+                                              : null,
+                                        ),
+                                        
+                                        // Property details
+                                        Padding(
+                                          padding: const EdgeInsets.all(12),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                formatPrice(similarProperty.price),
+                                                style: TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color.fromRGBO(27, 94, 32, 1),
+                                                ),
+                                              ),
+                                              SizedBox(height: 4),
+                                              Text(
+                                                formatPropertyType(similarProperty.propertyType) ?? 'Property',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              SizedBox(height: 4),
+                                              Text(
+                                                similarProperty.address,
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey[700],
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              SizedBox(height: 8),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  _propertyFeatureChip(
+                                                    Icons.bed, 
+                                                    "${similarProperty.bedrooms} bd"
+                                                  ),
+                                                  _propertyFeatureChip(
+                                                    Icons.bathtub, 
+                                                    "${similarProperty.bathrooms} ba"
+                                                  ),
+                                                  _propertyFeatureChip(
+                                                    Icons.square_foot, 
+                                                    similarProperty.formattedLivingArea
+                                                  ),
+                                                ],
+                                              ),
+                                              SizedBox(height: 8),
+                                              // Gesture hints
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.touch_app, 
+                                                    size: 14, 
+                                                    color: Colors.grey[600]
+                                                  ),
+                                                  SizedBox(width: 4),
+                                                  Text(
+                                                    "Double-tap to select, hold to view details",
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.grey[600],
+                                                      fontStyle: FontStyle.italic,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                },
+              ),
             ),
-          ],
-        ),
+          
+          // Return button
+          SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _closeFullScreenProperty,
+              icon: Icon(Icons.arrow_back),
+              label: Text("Back to Chat"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromRGBO(27, 94, 32, 1),
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 16),
+              ),
+            ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
+// Add a helper method for property feature chips
+Widget _propertyFeatureChip(IconData icon, String label) {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: Color.fromRGBO(27, 94, 32, 0.1),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: Color.fromRGBO(27, 94, 32, 1)),
+        SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Color.fromRGBO(27, 94, 32, 1),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   // Build property card
   Widget _buildPropertyCard(

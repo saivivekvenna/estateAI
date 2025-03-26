@@ -96,8 +96,16 @@ class ApiCalls {
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        
+        // Log the response for debugging
+        print('Similar properties API response: ${response.body.substring(0, min(100, response.body.length))}...');
+        print('Number of similar properties received: ${(data['results'] as List?)?.length ?? 0}');
+        
+        return data;
       } else {
+        print('Failed to get similar properties. Status code: ${response.statusCode}');
+        print('Response body: ${response.body}');
         throw Exception('Failed to get similar properties: ${response.statusCode}');
       }
     } catch (e) {
