@@ -28,6 +28,8 @@ class _RealEstateAppState extends State<RealEstateApp>
   final _user = const types.User(id: 'user');
   final _otherUser = const types.User(id: 'bot');
 
+  final Map<String, bool> _expandedDescriptions = {};
+
   // API service
   final ApiCalls _apiCalls = ApiCalls();
 
@@ -44,11 +46,11 @@ class _RealEstateAppState extends State<RealEstateApp>
   String? _fullScreenPropertyId;
   Property? _fullScreenProperty;
   bool _fullScreenIsMapView = false;
+  bool _fullScreenIsPlaceholderView = false;
 
   // Google Maps controllers
   Map<String, GoogleMapController?> _mapControllers = {};
   GoogleMapController? _fullScreenMapController;
-  bool _isMapInteractive = false;
 
   // Markers
   BitmapDescriptor? _customMarker;
@@ -612,15 +614,15 @@ class _RealEstateAppState extends State<RealEstateApp>
 
   // Show full screen property view
   void _showFullScreenProperty(
-      Property property, String propertyId, bool isMapView) {
-    setState(() {
-      _fullScreenPropertyId = propertyId;
-      _fullScreenProperty = property;
-      _fullScreenIsMapView = isMapView;
-      _isMapInteractive = false;
-    });
-    _animationController.forward(from: 0.0);
-  }
+    Property property, String propertyId, bool isMapView, bool isPlaceholderView) {
+  setState(() {
+    _fullScreenPropertyId = propertyId;
+    _fullScreenProperty = property;
+    _fullScreenIsMapView = isMapView;
+    _fullScreenIsPlaceholderView = isPlaceholderView;
+  });
+  _animationController.forward(from: 0.0);
+}
 
   // Close full screen property view
   void _closeFullScreenProperty() {
@@ -629,17 +631,25 @@ class _RealEstateAppState extends State<RealEstateApp>
         setState(() {
           _fullScreenPropertyId = null;
           _fullScreenProperty = null;
-          _isMapInteractive = false;
+          _fullScreenIsPlaceholderView = false;
         });
       }
     });
   }
 
-  // Toggle map interactive mode
-  void _toggleMapInteractiveMode() {
-    setState(() {
-      _isMapInteractive = !_isMapInteractive;
-    });
+  //FORMATING PRICE
+  String formatPrice(String price) {
+    // Remove any non-numeric characters except the decimal point
+    String cleanedPrice = price.replaceAll(RegExp(r'[^\d.]'), '');
+
+    // Parse the cleaned string to a double, default to 0 if parsing fails
+    double priceValue = double.tryParse(cleanedPrice) ?? 0.0;
+
+    // Create a currency formatter with no decimal digits
+    final formatter = NumberFormat.currency(symbol: '\$', decimalDigits: 0);
+
+    // Format the number and return
+    return formatter.format(priceValue);
   }
 
   void _handleLeftSwipe(Property property) async {
@@ -681,7 +691,7 @@ class _RealEstateAppState extends State<RealEstateApp>
       }
 
       // Show property details with images
-      _showFullScreenProperty(updatedProperty, updatedProperty.zpid, false);
+      _showFullScreenProperty(updatedProperty, updatedProperty.zpid, false, false);
     } catch (e) {
       print('Error getting property images: $e');
       // Show an error message to the user
@@ -698,32 +708,17 @@ class _RealEstateAppState extends State<RealEstateApp>
     }
   }
 
-  // Handle right swipe - get similar properties
+  // Handle right swipe - show placeholder page
   void _handleRightSwipe(Property property) async {
     try {
       setState(() {
         _isLoading = true;
       });
 
-      // Call more properties API
-      // final response = await _apiCalls.getSimilarProperties(property.toJson());
-
-      // // Extract properties
-      // final propertyResults = response['results'] as List<dynamic>;
-
-      // // Convert to Property objects
-      // final similarProperties =
-      //     propertyResults.map((json) => Property.fromJson(json)).toList();
-
-      // Show map view with similar properties
-      _showFullScreenProperty(property, property.zpid, true);
-
-      // Add similar properties to state
-      setState(() {
-        //_properties = [..._properties, ...similarProperties];
-      });
+      // Show placeholder page for the property
+      _showFullScreenProperty(property, property.zpid, false, true);
     } catch (e) {
-      print('Error getting similar properties: $e');
+      print('Error showing placeholder page: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -781,7 +776,7 @@ class _RealEstateAppState extends State<RealEstateApp>
                     },
                     confirmDismiss: (direction) async {
                       if (direction == DismissDirection.startToEnd) {
-                        // Right swipe - show map and similar properties
+                        // Right swipe - show placeholder page
                         _handleRightSwipe(property);
                       } else {
                         // Left swipe - show details and images
@@ -793,7 +788,7 @@ class _RealEstateAppState extends State<RealEstateApp>
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.only(left: 20),
                       color: Colors.transparent,
-                      child: const Icon(Icons.map,
+                      child: const Icon(Icons.maps_home_work_rounded,
                           color: Colors.white70, size: 50),
                     ),
                     secondaryBackground: Container(
@@ -816,8 +811,8 @@ class _RealEstateAppState extends State<RealEstateApp>
                                 _buildPropertyCard(property, propertyId, false),
                                 if (isSelected)
                                   Positioned(
-                                    top: 8,
-                                    right: 8,
+                                    top: 5,
+                                    right: 5,
                                     child: Container(
                                       padding: EdgeInsets.all(6),
                                       decoration: BoxDecoration(
@@ -827,7 +822,7 @@ class _RealEstateAppState extends State<RealEstateApp>
                                       child: Icon(
                                         Icons.check,
                                         color: Colors.white,
-                                        size: 16,
+                                        size: 20,
                                       ),
                                     ),
                                   ),
@@ -845,7 +840,7 @@ class _RealEstateAppState extends State<RealEstateApp>
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   color: const Color.fromRGBO(52, 99, 56, 1),
                   borderRadius: BorderRadius.circular(12),
@@ -861,6 +856,194 @@ class _RealEstateAppState extends State<RealEstateApp>
     }
 
     return const SizedBox.shrink();
+  }
+
+  Widget _buildDescriptionSection(Property property) {
+    const int maxLines = 3; // Number of lines to show when truncated
+    final bool isExpanded = _expandedDescriptions[property.zpid] ?? false;
+    final String description = property.description ?? "N/A";
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Description text with fade effect when truncated
+        ShaderMask(
+          shaderCallback: (Rect bounds) {
+            return LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isExpanded
+                  ? [Colors.black, Colors.black] // No fade when expanded
+                  : [Colors.black, Colors.transparent],
+              stops: isExpanded ? [0.0, 1.0] : [0.7, 1.0], // Fade starts at 70%
+            ).createShader(bounds);
+          },
+          blendMode: BlendMode.dstIn,
+          child: Text(
+            description,
+            style: const TextStyle(fontSize: 16),
+            maxLines: isExpanded ? null : maxLines,
+            overflow: isExpanded ? null : TextOverflow.clip,
+          ),
+        ),
+        // Expand/Collapse button
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () {
+              setState(() {
+                _expandedDescriptions[property.zpid] = !isExpanded;
+              });
+            },
+            child: Container(
+              height: 30,
+              width: 80,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Center(
+              child: Text(
+                isExpanded ? "Collapse" : "Expand",
+                style: const TextStyle(
+                  color: Color.fromRGBO(27, 94, 32, 1),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              )
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Build nearby amenities section
+  Widget _buildNearbyAmenitiesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Nearby Amenities",
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (var amenity in [
+              'Shopping Center',
+              'Park',
+              'School',
+              'Restaurant',
+              'Grocery Store',
+              'Hospital',
+              'Gym'
+            ])
+              Chip(
+                label: Text(amenity),
+                backgroundColor: Color.fromRGBO(27, 94, 32, 1).withOpacity(0.1),
+                side: BorderSide(
+                    color: Color.fromRGBO(27, 94, 32, 1).withOpacity(0.3)),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // Build placeholder page
+  Widget _buildPlaceholderPage(Property property, String propertyId) {
+    return Card(
+      color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Text(
+              "Similar Properties",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              "Properties like ${property.address}",
+              style: TextStyle(
+                color: Colors.grey[700],
+                fontSize: 16,
+              ),
+            ),
+            
+            Divider(height: 32),
+            
+            // Placeholder content
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(height: 45),
+                  Icon(
+                    Icons.home_work_outlined,
+                    size: 100,
+                    color: Colors.grey[400],
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    "Finding similar properties...",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    "We're searching for properties that match your preferences based on this property.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  SizedBox(height: 40),
+                  CircularProgressIndicator(
+                    color: Color.fromRGBO(27, 94, 32, 1),
+                  ),
+                ],
+              ),
+            ),
+            
+            Spacer(),
+            
+            // Return button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _closeFullScreenProperty,
+                icon: Icon(Icons.arrow_back),
+                label: Text("Return to Chat"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color.fromRGBO(27, 94, 32, 1),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // Build property card
@@ -912,14 +1095,14 @@ class _RealEstateAppState extends State<RealEstateApp>
             SizedBox(height: isFullScreen ? 16 : 8),
 
             Text(
-              property.price,
+              formatPrice(property.price),
               style: TextStyle(
                   fontSize: isFullScreen ? 20 : 16,
                   color: Colors.green,
                   fontWeight: FontWeight.bold),
             ),
 
-            SizedBox(height: isFullScreen ? 16 : 10),
+            SizedBox(height: isFullScreen ? 16 : 6),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1030,12 +1213,14 @@ class _RealEstateAppState extends State<RealEstateApp>
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                "Beautiful property located in a prime area with easy access to amenities.",
-                style: const TextStyle(fontSize: 16),
-              ),
+              _buildDescriptionSection(property),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 10),
+
+              // Nearby amenities section (moved from map view)
+              _buildNearbyAmenitiesSection(),
+
+              const SizedBox(height: 20),
 
               // Additional property details
               Text(
@@ -1097,12 +1282,12 @@ class _RealEstateAppState extends State<RealEstateApp>
 
               const SizedBox(height: 16),
 
-              // View on map button
+              // View on map button - opens expanded map view directly
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    // Switch to map view
+                    // Open expanded map view directly with interactive mode
                     setState(() {
                       _fullScreenIsMapView = true;
                     });
@@ -1302,217 +1487,111 @@ class _RealEstateAppState extends State<RealEstateApp>
   }
 
   // Build map view
-  Widget _buildMapView(
-      Property property, String propertyId, bool isFullScreen) {
-    final double lat = property.latitude ?? 37.7749;
-    final double lng = property.longitude ?? -122.4194;
-    final LatLng propertyLocation = LatLng(lat, lng);
+Widget _buildMapView(
+    Property property, String propertyId, bool isFullScreen) {
+  final double lat = property.latitude ?? 37.7749;
+  final double lng = property.longitude ?? -122.4194;
+  final LatLng propertyLocation = LatLng(lat, lng);
 
-    Set<Marker> markers = {};
+  Set<Marker> markers = {};
 
-    markers.add(
-      Marker(
-        markerId: MarkerId(propertyId),
-        position: propertyLocation,
-        icon: _customMarker ??
-            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-        infoWindow: InfoWindow(
-          title: formatPropertyType(property.propertyType) ?? 'Property',
-          snippet: property.price,
-        ),
+  markers.add(
+    Marker(
+      markerId: MarkerId(propertyId),
+      position: propertyLocation,
+      icon: _customMarker ??
+          BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+      infoWindow: InfoWindow(
+        title: formatPropertyType(property.propertyType) ?? 'Property',
+        snippet: formatPrice(property.price),
       ),
-    );
+    ),
+  );
 
-    // Add nearby properties markers if in full screen and interactive mode
-    if (isFullScreen && _isMapInteractive) {
-      for (var nearbyProperty in _properties) {
-        if (nearbyProperty.zpid != propertyId &&
-            nearbyProperty.latitude != null &&
-            nearbyProperty.longitude != null) {
-          markers.add(
-            Marker(
-              markerId: MarkerId(nearbyProperty.zpid),
-              position:
-                  LatLng(nearbyProperty.latitude!, nearbyProperty.longitude!),
-              icon: _nearbyMarker ??
-                  BitmapDescriptor.defaultMarkerWithHue(
-                      BitmapDescriptor.hueAzure),
-              infoWindow: InfoWindow(
-                title: formatPropertyType(nearbyProperty.propertyType) ??
-                    'Property',
-                snippet: nearbyProperty.price,
-              ),
+  // Add nearby properties markers if in full screen
+  if (isFullScreen) {
+    for (var nearbyProperty in _properties) {
+      if (nearbyProperty.zpid != propertyId &&
+          nearbyProperty.latitude != null &&
+          nearbyProperty.longitude != null) {
+        markers.add(
+          Marker(
+            markerId: MarkerId(nearbyProperty.zpid),
+            position:
+                LatLng(nearbyProperty.latitude!, nearbyProperty.longitude!),
+            icon: _nearbyMarker ??
+                BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueAzure),
+            infoWindow: InfoWindow(
+              title: formatPropertyType(nearbyProperty.propertyType) ??
+                  'Property',
+              snippet: formatPrice(nearbyProperty.price),
             ),
-          );
-        }
+          ),
+        );
       }
     }
-
-    return Card(
-      color: Colors.white,
-      elevation: isFullScreen ? 0 : 6,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: isFullScreen ? EdgeInsets.zero : const EdgeInsets.all(8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (!isFullScreen || !_isMapInteractive)
-              Row(
-                children: [
-                  Text(
-                    "Location Map",
-                    style: TextStyle(
-                        fontSize: isFullScreen ? 24 : 18,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-              ),
-
-            SizedBox(
-                height: (!isFullScreen || !_isMapInteractive)
-                    ? (isFullScreen ? 16 : 12)
-                    : 0),
-
-            // Google Maps widget
-            Container(
-              height: isFullScreen ? (_isMapInteractive ? 570 : 250) : 150,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Stack(
-                children: [
-                  GoogleMap(
-                    initialCameraPosition: CameraPosition(
-                      target: propertyLocation,
-                      zoom: isFullScreen ? (_isMapInteractive ? 13 : 14) : 15,
-                    ),
-                    markers: markers,
-                    mapType: MapType.normal,
-                    myLocationEnabled: false,
-                    zoomControlsEnabled: isFullScreen && _isMapInteractive,
-                    zoomGesturesEnabled: isFullScreen && _isMapInteractive,
-                    scrollGesturesEnabled: isFullScreen && _isMapInteractive,
-                    rotateGesturesEnabled: isFullScreen && _isMapInteractive,
-                    tiltGesturesEnabled: isFullScreen && _isMapInteractive,
-                    compassEnabled: isFullScreen && _isMapInteractive,
-                    mapToolbarEnabled: isFullScreen && _isMapInteractive,
-                    onMapCreated: (GoogleMapController controller) {
-                      if (isFullScreen) {
-                        _fullScreenMapController = controller;
-                      } else {
-                        _mapControllers[propertyId] = controller;
-                      }
-                    },
-                    onTap: isFullScreen
-                        ? (_) {
-                            _toggleMapInteractiveMode();
-                          }
-                        : null,
-                  ),
-
-                  // Back button for interactive mode
-                  if (isFullScreen && _isMapInteractive)
-                    Positioned(
-                      top: 10,
-                      left: 10,
-                      child: FloatingActionButton.small(
-                        onPressed: _toggleMapInteractiveMode,
-                        backgroundColor: Colors.white,
-                        child: Icon(Icons.arrow_back, color: Colors.black),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
-            // Full screen content for map view
-            if (isFullScreen && !_isMapInteractive) ...[
-              const Divider(height: 32),
-
-              // Nearby amenities
-              Text(
-                "Nearby Amenities",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (var amenity in [
-                    'Shopping Center',
-                    'Park',
-                    'School',
-                    'Restaurant'
-                  ])
-                    Chip(
-                      label: Text(amenity),
-                      backgroundColor:
-                          Color.fromRGBO(27, 94, 32, 1).withOpacity(0.1),
-                      side: BorderSide(
-                          color:
-                              Color.fromRGBO(27, 94, 32, 1).withOpacity(0.3)),
-                    ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // Call to action buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: _actionButton(
-                      Icons.directions,
-                      "Get Directions",
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _actionButton(Icons.explore, "Explore Area"),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // View property details button
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    // Switch to property details view
-                    setState(() {
-                      _fullScreenIsMapView = false;
-                    });
-                  },
-                  icon: Icon(Icons.home, color: Color.fromRGBO(27, 94, 32, 1)),
-                  label: Text(
-                    "View Property Details",
-                    style: TextStyle(color: Color.fromRGBO(27, 94, 32, 1)),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    side:
-                        BorderSide(color: const Color.fromRGBO(27, 94, 32, 1)),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
   }
+
+  // Calculate appropriate height with bottom padding
+  final screenHeight = MediaQuery.of(context).size.height;
+  final mapHeight = isFullScreen 
+    ? (screenHeight * 0.7).toDouble() // Explicitly convert to double
+    : 150.0; // Use 150.0 instead of 150
+
+  return Container(
+    height: mapHeight,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.zero,
+    ),
+    clipBehavior: Clip.antiAlias,
+    margin: isFullScreen ? EdgeInsets.only(bottom: 0) : EdgeInsets.zero,
+    child: Stack(
+      children: [
+        GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: propertyLocation,
+            zoom: isFullScreen ? 13 : 15,
+          ),
+          markers: markers,
+          mapType: MapType.normal,
+          myLocationEnabled: false,
+          zoomControlsEnabled: isFullScreen,
+          zoomGesturesEnabled: true,
+          scrollGesturesEnabled: true, // Always enable scrolling
+          rotateGesturesEnabled: isFullScreen,
+          tiltGesturesEnabled: isFullScreen,
+          compassEnabled: isFullScreen,
+          mapToolbarEnabled: isFullScreen,
+          onMapCreated: (GoogleMapController controller) {
+            if (isFullScreen) {
+              _fullScreenMapController = controller;
+            } else {
+              _mapControllers[propertyId] = controller;
+            }
+          },
+        ),
+
+        // Back button for full screen mode
+        if (isFullScreen)
+          Positioned(
+            top: 10,
+            left: 10,
+            child: FloatingActionButton.small(
+              onPressed: () {
+                // Return directly to details view
+                setState(() {
+                  _fullScreenIsMapView = false;
+                });
+              },
+              backgroundColor: Colors.white,
+              child: Icon(Icons.arrow_back, color: Colors.black),
+            ),
+          ),
+      ],
+    ),
+  );
+}
 
   // Build full screen overlay
   Widget _buildFullScreenOverlay() {
@@ -1542,8 +1621,8 @@ class _RealEstateAppState extends State<RealEstateApp>
                   alignment: Alignment.topCenter,
                   child: Container(
                     width: cardWidth,
-                    height: _fullScreenIsMapView && _isMapInteractive
-                        ? screenSize.height * 0.85
+                    height: _fullScreenIsMapView
+                        ? screenSize.height * 0.75 // Reduced from 0.85 to 0.8
                         : cardHeight,
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -1578,7 +1657,7 @@ class _RealEstateAppState extends State<RealEstateApp>
                                 onPressed: _closeFullScreenProperty,
                                 iconSize: 24,
                               ),
-                              if (!(_fullScreenIsMapView && _isMapInteractive))
+                              if (!_fullScreenIsPlaceholderView)
                                 Text(
                                   formatPropertyType(
                                           _fullScreenProperty!.propertyType) ??
@@ -1588,25 +1667,21 @@ class _RealEstateAppState extends State<RealEstateApp>
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              // Toggle view button
-                              if (!_isMapInteractive)
+                              // Toggle view button (only show in details view when map is not already open)
+                              if (!_fullScreenIsPlaceholderView && !_fullScreenIsMapView)
                                 TextButton.icon(
                                   onPressed: () {
                                     setState(() {
-                                      _fullScreenIsMapView =
-                                          !_fullScreenIsMapView;
-                                      _isMapInteractive = false;
+                                      _fullScreenIsMapView = true;
                                     });
                                   },
                                   icon: Icon(
-                                    _fullScreenIsMapView
-                                        ? Icons.home
-                                        : Icons.map,
+                                    Icons.map,
                                     size: 18,
                                     color: Colors.green[900],
                                   ),
                                   label: Text(
-                                    _fullScreenIsMapView ? "Details" : "Map",
+                                    "Map",
                                     style: TextStyle(
                                         fontSize: 14, color: Colors.green[900]),
                                   ),
@@ -1616,46 +1691,27 @@ class _RealEstateAppState extends State<RealEstateApp>
                         ),
 
                         // Content
-                        Expanded(
-                          child: GestureDetector(
-                            onHorizontalDragEnd: (details) {
-                              if (!_isMapInteractive) {
-                                if (details.primaryVelocity! > 0) {
-                                  setState(() {
-                                    _fullScreenIsMapView = true;
-                                  });
-                                } else if (details.primaryVelocity! < 0) {
-                                  setState(() {
-                                    _fullScreenIsMapView = false;
-                                  });
-                                }
-                              }
-                            },
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.only(
-                                bottomLeft: Radius.circular(16),
-                                bottomRight: Radius.circular(16),
-                              ),
-                              child: _fullScreenIsMapView && _isMapInteractive
-                                  ? _buildMapView(_fullScreenProperty!,
-                                      _fullScreenPropertyId!, true)
-                                  : SingleChildScrollView(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16.0),
-                                        child: _fullScreenIsMapView
-                                            ? _buildMapView(
-                                                _fullScreenProperty!,
-                                                _fullScreenPropertyId!,
-                                                true)
-                                            : _buildPropertyCard(
-                                                _fullScreenProperty!,
-                                                _fullScreenPropertyId!,
-                                                true),
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ),
+Expanded(
+  child: ClipRRect(
+    borderRadius: BorderRadius.only(
+      bottomLeft: Radius.circular(16),
+      bottomRight: Radius.circular(16),
+    ),
+    child: _fullScreenIsPlaceholderView
+        ? _buildPlaceholderPage(_fullScreenProperty!, _fullScreenPropertyId!)
+        : (_fullScreenIsMapView
+            ? _buildMapView(_fullScreenProperty!, _fullScreenPropertyId!, true)
+            : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: _buildPropertyCard(
+                      _fullScreenProperty!,
+                      _fullScreenPropertyId!,
+                      true),
+                ),
+              )),
+  ),
+),
                       ],
                     ),
                   ),
@@ -1842,3 +1898,4 @@ class _RealEstateAppState extends State<RealEstateApp>
     );
   }
 }
+
