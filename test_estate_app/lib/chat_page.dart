@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:soft_edge_blur/soft_edge_blur.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 
 import 'api_calls.dart';
 import 'models/property.dart';
@@ -33,6 +36,10 @@ class _RealEstateAppState extends State<RealEstateApp>
   bool _isLoading = false;
   String? _errorMessage;
 
+  // Selected property for discussion
+  Property? _selectedProperty;
+  String? _selectedPropertyId;
+
   // Full screen property view
   String? _fullScreenPropertyId;
   Property? _fullScreenProperty;
@@ -51,6 +58,10 @@ class _RealEstateAppState extends State<RealEstateApp>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
+  // Animation for property selection
+  late AnimationController _selectionAnimationController;
+  late Animation<double> _pulseAnimation;
+
   @override
   void initState() {
     super.initState();
@@ -68,11 +79,35 @@ class _RealEstateAppState extends State<RealEstateApp>
       ),
     );
 
+    // Setup selection animation
+    _selectionAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(
+        parent: _selectionAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _selectionAnimationController.repeat(reverse: true);
+
+    // Add a keyboard listener for better positioning
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // This ensures we rebuild when the keyboard appears/disappears
+      final keyboardVisibilityController = KeyboardVisibilityController();
+      keyboardVisibilityController.onChange.listen((bool visible) {
+        if (mounted) setState(() {});
+      });
+    });
+
     // Add a welcome message
     Future.delayed(const Duration(milliseconds: 500), () {
       if (_messages.isEmpty) {
         _addBotTextMessage(
-            "Hello! I'm your real estate assistant. How can I help you find your dream home today?");
+            "Hello! I'm you. How can I help you find your dream home today?");
       }
     });
   }
@@ -137,6 +172,22 @@ class _RealEstateAppState extends State<RealEstateApp>
     });
   }
 
+  // Select a property for discussion
+  void _selectProperty(Property property, String propertyId) {
+    setState(() {
+      if (_selectedPropertyId == propertyId) {
+        _selectedProperty = null;
+        _selectedPropertyId = null;
+      } else {
+        _selectedProperty = property;
+        _selectedPropertyId = propertyId;
+      }
+    });
+
+    print("Selected Property JSON:\n${jsonEncode(_selectedProperty?.toJson())}");
+
+  }
+
   void _addCombinedResponse(List<Property> properties, String agentResponse) {
     if (properties.isEmpty) {
       _addBotTextMessage(
@@ -160,6 +211,7 @@ class _RealEstateAppState extends State<RealEstateApp>
     });
   }
 
+  // Handle sending messages to the server
   void _handleSendPressed(types.PartialText message) async {
     // Add user message to chat
     final textMessage = types.TextMessage(
@@ -175,12 +227,95 @@ class _RealEstateAppState extends State<RealEstateApp>
     });
 
     try {
-      // Build the full conversation history with clear identification of speakers
+      print("TESTTESTTEST DSL;KFJDASFL;JK");
+      print(_selectedProperty?.hasFireplace);
+      
+      // Build the context based on what's available
       String conversationHistory = "";
+      Map<String, dynamic>? selectedPropertyData;
+
+      // If there's a selected property, prioritize sending its data
+      if (_selectedProperty != null) {
+        selectedPropertyData = _selectedProperty!.toJson();
+
+        // Add a special header to indicate that this is a selected property query
+        conversationHistory += "SELECTED_PROPERTY_QUERY: true\n\n";
+
+        // Add the selected property details as structured data
+        conversationHistory += "SELECTED_PROPERTY:\n";
+        conversationHistory += "Address: ${_selectedProperty!.address}\n";
+        conversationHistory += "Price: ${_selectedProperty!.price}\n";
+        conversationHistory += "Bedrooms: ${_selectedProperty!.bedrooms}\n";
+        conversationHistory += "Bathrooms: ${_selectedProperty!.bathrooms}\n";
+        conversationHistory +=
+            "Living Area: ${_selectedProperty!.formattedLivingArea}\n";
+
+        // Add additional property details
+        if (_selectedProperty!.yearBuilt != null)
+          conversationHistory +=
+              "Year Built: ${_selectedProperty!.yearBuilt}\n";
+
+        conversationHistory += "Has Pool: ${_selectedProperty!.hasPool}\n";
+        conversationHistory +=
+            "Has Air Conditioning: ${_selectedProperty!.hasAirConditioning}\n";
+        conversationHistory += "Has Garage: ${_selectedProperty!.hasGarage}\n";
+
+        if (_selectedProperty!.parkingSpots != null &&
+            _selectedProperty!.parkingSpots != "--")
+          conversationHistory +=
+              "Parking Spots: ${_selectedProperty!.parkingSpots}\n";
+
+        conversationHistory +=
+            "Has City View: ${_selectedProperty!.isCityView}\n";
+        conversationHistory +=
+            "Has Mountain View: ${_selectedProperty!.isMountainView}\n";
+        conversationHistory +=
+            "Has Water View: ${_selectedProperty!.isWaterView}\n";
+        conversationHistory +=
+            "Has Park View: ${_selectedProperty!.isParkView}\n";
+
+        conversationHistory += "\n";
+      }
+      // If no property is selected, include all available properties for context
+      else if (_properties.isNotEmpty) {
+        conversationHistory += "AVAILABLE_PROPERTIES:\n";
+        for (int i = 0; i < _properties.length; i++) {
+          final property = _properties[i];
+          conversationHistory +=
+              "Property ${i + 1}: ${property.address}, ${property.price}, ${property.bedrooms} beds, ${property.bathrooms} baths, ${property.formattedLivingArea}";
+
+          // Add additional property details that might be useful for answering questions
+          List<String> additionalDetails = [];
+          if (property.hasPool == true) additionalDetails.add("has pool");
+          if (property.hasAirConditioning == true)
+            additionalDetails.add("has air conditioning");
+          if (property.hasGarage == true) additionalDetails.add("has garage");
+          if (property.parkingSpots != null && property.parkingSpots != "--")
+            additionalDetails.add("${property.parkingSpots} parking spots");
+          if (property.yearBuilt != null)
+            additionalDetails.add("built in ${property.yearBuilt}");
+          if (property.isCityView == true)
+            additionalDetails.add("has city view");
+          if (property.isMountainView == true)
+            additionalDetails.add("has mountain view");
+          if (property.isWaterView == true)
+            additionalDetails.add("has water view");
+          if (property.isParkView == true)
+            additionalDetails.add("has park view");
+
+          if (additionalDetails.isNotEmpty) {
+            conversationHistory += " (${additionalDetails.join(", ")})";
+          }
+
+          conversationHistory += "\n";
+        }
+        conversationHistory += "\n";
+      }
 
       // Get all messages in chronological order (oldest first)
       final messagesInOrder = _messages.reversed.toList();
 
+      // Add conversation history
       for (var msg in messagesInOrder) {
         if (msg is types.TextMessage) {
           final speaker = msg.author.id == _user.id ? "User" : "Agent";
@@ -189,10 +324,11 @@ class _RealEstateAppState extends State<RealEstateApp>
       }
 
       try {
-        // Call search API with full conversation history
+        // Call search API with full conversation history and selected property data
         final response = await _apiCalls.searchProperties(
           message.text,
           context: conversationHistory,
+          selectedProperty: selectedPropertyData,
         );
 
         if (response == null) {
@@ -206,37 +342,24 @@ class _RealEstateAppState extends State<RealEstateApp>
         }
 
         final propertyResults = response['results'] as List<dynamic>?;
-        if (propertyResults == null || propertyResults.isEmpty) {
-          throw Exception("No property results found");
+
+        // Clear the selected property if the user asked for new properties
+        if (propertyResults != null && propertyResults.isNotEmpty) {
+          setState(() {
+            _selectedProperty = null;
+            _selectedPropertyId = null;
+
+            // Convert to Property objects
+            _properties =
+                propertyResults.map((json) => Property.fromJson(json)).toList();
+          });
+
+          // Add combined response (properties + agent text)
+          _addCombinedResponse(_properties, agentResponse);
+        } else {
+          // Just add the text response if no properties were returned
+          _addBotTextMessage(agentResponse);
         }
-
-        // Convert to Property objects
-        _properties =
-            propertyResults.map((json) => Property.fromJson(json)).toList();
-
-        // Add combined response (properties + agent text)
-        _addCombinedResponse(_properties, agentResponse);
-
-        // // Extract agent response and properties
-        // final agentResponse = response['agentResponse'] as String?;
-        // if (agentResponse == null) {
-        //   throw Exception("Agent response missing in API response");
-        // }
-
-        // final propertyResults = response['results'] as List<dynamic>?;
-        // if (propertyResults == null || propertyResults.isEmpty) {
-        //   throw Exception("No property results found");
-        // }
-
-        // // Convert to Property objects
-        // _properties =
-        //     propertyResults.map((json) => Property.fromJson(json)).toList();
-
-        // // Add properties response
-        // _addPropertiesResponse(_properties);
-
-        // // Add agent response
-        // _addBotTextMessage(agentResponse);
       } catch (apiError) {
         // Handle API-specific errors
         print('Error with API request: $apiError');
@@ -245,7 +368,7 @@ class _RealEstateAppState extends State<RealEstateApp>
               'Failed to fetch property details from the API. Please try again later.';
         });
         _addBotTextMessage(
-            'Sorry, I encountered an error while searching for properties. Please try again.');
+            'Sorry, I encountered an error while processing your request. Please try again.');
         return; // Return early if there's an API issue
       }
     } catch (e) {
@@ -329,15 +452,15 @@ class _RealEstateAppState extends State<RealEstateApp>
 
       // Create a new property with the updated image URLs
       Property updatedProperty = property;
-      
+
       // Extract image URLs from response
       if (response != null && response['images'] != null) {
         final List<dynamic> imageData = response['images'] as List<dynamic>;
-        
+
         // Check the structure of the image data
         if (imageData.isNotEmpty) {
           List<String> imageUrls = [];
-          
+
           // Try to extract URLs based on the response structure
           for (var img in imageData) {
             if (img is Map<String, dynamic> && img.containsKey('url')) {
@@ -346,7 +469,7 @@ class _RealEstateAppState extends State<RealEstateApp>
               imageUrls.add(img);
             }
           }
-          
+
           if (imageUrls.isNotEmpty) {
             // Create a new property with the updated image URLs
             Map<String, dynamic> propertyJson = property.toJson();
@@ -414,6 +537,7 @@ class _RealEstateAppState extends State<RealEstateApp>
     }
     _fullScreenMapController?.dispose();
     _animationController.dispose();
+    _selectionAnimationController.dispose();
     super.dispose();
   }
 
@@ -440,43 +564,77 @@ class _RealEstateAppState extends State<RealEstateApp>
           for (var property in properties)
             Builder(builder: (context) {
               final propertyId = property.zpid;
+              final isSelected = _selectedPropertyId == propertyId;
 
               return Padding(
                 padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                child: Dismissible(
-                  key: Key(propertyId),
-                  direction: DismissDirection.horizontal,
-                  onDismissed: (_) {
-                    // This won't be called because confirmDismiss returns false
+                child: GestureDetector(
+                  onDoubleTap: () {
+                    _selectProperty(property, propertyId);
                   },
-                  confirmDismiss: (direction) async {
-                    if (direction == DismissDirection.startToEnd) {
-                      // Right swipe - show map and similar properties
-                      _handleRightSwipe(property);
-                    } else {
-                      // Left swipe - show details and images
-                      _handleLeftSwipe(property);
-                    }
-                    return false; // Prevents card from disappearing
-                  },
-                  background: Container(
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.only(left: 20),
-                    color: Colors.transparent,
-                    child:
-                        const Icon(Icons.map, color: Colors.white70, size: 50),
-                  ),
-                  secondaryBackground: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 20),
-                    color: Colors.transparent,
-                    child: const Icon(
-                      Icons.home_rounded,
-                      color: Colors.white70,
-                      size: 50,
+                  child: Dismissible(
+                    key: Key(propertyId),
+                    direction: DismissDirection.horizontal,
+                    onDismissed: (_) {
+                      // This won't be called because confirmDismiss returns false
+                    },
+                    confirmDismiss: (direction) async {
+                      if (direction == DismissDirection.startToEnd) {
+                        // Right swipe - show map and similar properties
+                        _handleRightSwipe(property);
+                      } else {
+                        // Left swipe - show details and images
+                        _handleLeftSwipe(property);
+                      }
+                      return false; // Prevents card from disappearing
+                    },
+                    background: Container(
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.only(left: 20),
+                      color: Colors.transparent,
+                      child: const Icon(Icons.map,
+                          color: Colors.white70, size: 50),
                     ),
+                    secondaryBackground: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20),
+                      color: Colors.transparent,
+                      child: const Icon(
+                        Icons.home_rounded,
+                        color: Colors.white70,
+                        size: 50,
+                      ),
+                    ),
+                    child: AnimatedBuilder(
+                        animation: _pulseAnimation,
+                        builder: (context, child) {
+                          return Transform.scale(
+                            scale: isSelected ? _pulseAnimation.value : 1.0,
+                            child: Stack(
+                              children: [
+                                _buildPropertyCard(property, propertyId, false),
+                                if (isSelected)
+                                  Positioned(
+                                    top: 8,
+                                    right: 8,
+                                    child: Container(
+                                      padding: EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.shade600,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.check,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        }),
                   ),
-                  child: _buildPropertyCard(property, propertyId, false),
                 ),
               );
             }),
@@ -486,7 +644,7 @@ class _RealEstateAppState extends State<RealEstateApp>
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
               child: Container(
-                padding: const EdgeInsets.all(0),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: const Color.fromRGBO(52, 99, 56, 1),
                   borderRadius: BorderRadius.circular(12),
@@ -876,7 +1034,8 @@ class _RealEstateAppState extends State<RealEstateApp>
           ),
         ),
         SizedBox(
-          height: 20,),
+          height: 20,
+        ),
         // Image pagination indicators
         // if (allImages.length > 1)
         //   Padding(
@@ -1425,6 +1584,52 @@ class _RealEstateAppState extends State<RealEstateApp>
                 child: Text(
                   _errorMessage!,
                   style: TextStyle(color: Colors.red[900]),
+                ),
+              ),
+            ),
+
+          // Selected property hint - positioned above input box
+          if (_selectedProperty != null)
+            Positioned(
+              bottom: MediaQuery.of(context).viewInsets.bottom +
+                  80, // Position dynamically based on keyboard height
+              right: 16,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                margin: EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                    color: Colors.green.shade600,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 5,
+                        offset: Offset(0, 2),
+                      )
+                    ]),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.home, color: Colors.white, size: 18),
+                    SizedBox(width: 6),
+                    Text(
+                      "Property Selected",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedProperty = null;
+                          _selectedPropertyId = null;
+                        });
+                      },
+                      child: Icon(Icons.close, color: Colors.white, size: 18),
+                    ),
+                  ],
                 ),
               ),
             ),
