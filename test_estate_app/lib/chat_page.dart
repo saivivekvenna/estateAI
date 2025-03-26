@@ -124,6 +124,7 @@ class _RealEstateAppState extends State<RealEstateApp>
 
   String formatPropertyType(String propertyType) {
     const propertyTypeMap = {
+      'SingleFamily': 'Single Family',
       'SINGLE_FAMILY': 'Single Family',
       'TOWNHOUSE': 'Townhouse',
       'CONDO': 'Condo',
@@ -184,8 +185,8 @@ class _RealEstateAppState extends State<RealEstateApp>
       }
     });
 
-    print("Selected Property JSON:\n${jsonEncode(_selectedProperty?.toJson())}");
-
+    print(
+        "Selected Property JSON:\n${jsonEncode(_selectedProperty?.toJson())}");
   }
 
   void _addCombinedResponse(List<Property> properties, String agentResponse) {
@@ -227,14 +228,14 @@ class _RealEstateAppState extends State<RealEstateApp>
     });
 
     try {
-      print("TESTTESTTEST DSL;KFJDASFL;JK");
-      print(_selectedProperty?.hasFireplace);
-      
-      // Build the context based on what's available
+      // print("TESTTESTTEST DSL;KFJDASFL;JK");
+      // print(_selectedProperty?.hasFireplace);
+
+// Build the context based on what's available
       String conversationHistory = "";
       Map<String, dynamic>? selectedPropertyData;
 
-      // If there's a selected property, prioritize sending its data
+// If there's a selected property, prioritize sending its data
       if (_selectedProperty != null) {
         selectedPropertyData = _selectedProperty!.toJson();
 
@@ -249,34 +250,229 @@ class _RealEstateAppState extends State<RealEstateApp>
         conversationHistory += "Bathrooms: ${_selectedProperty!.bathrooms}\n";
         conversationHistory +=
             "Living Area: ${_selectedProperty!.formattedLivingArea}\n";
+        conversationHistory +=
+            "Property Type: ${_selectedProperty!.propertyType}\n";
+        conversationHistory += "ZPID: ${_selectedProperty!.zpid}\n";
 
-        // Add additional property details
-        if (_selectedProperty!.yearBuilt != null)
+        // Additional basic fields
+        if (_selectedProperty!.photoURL != null) {
+          conversationHistory += "Photo URL: ${_selectedProperty!.photoURL}\n";
+        }
+        if (_selectedProperty!.imageUrls.isNotEmpty) {
+          conversationHistory +=
+              "Image URLs: ${_selectedProperty!.imageUrls.join(', ')}\n";
+        }
+        if (_selectedProperty!.lotAreaValue != null) {
+          conversationHistory +=
+              "Lot Area Value: ${_selectedProperty!.lotAreaValue} ${_selectedProperty!.lotAreaUnit ?? ''}\n";
+        }
+        if (_selectedProperty!.yearBuilt != null) {
           conversationHistory +=
               "Year Built: ${_selectedProperty!.yearBuilt}\n";
-
-        conversationHistory += "Has Pool: ${_selectedProperty!.hasPool}\n";
-        conversationHistory +=
-            "Has Air Conditioning: ${_selectedProperty!.hasAirConditioning}\n";
-        conversationHistory += "Has Garage: ${_selectedProperty!.hasGarage}\n";
-
-        if (_selectedProperty!.parkingSpots != null &&
-            _selectedProperty!.parkingSpots != "--")
+        }
+        if (_selectedProperty!.zillowLink != null) {
           conversationHistory +=
-              "Parking Spots: ${_selectedProperty!.parkingSpots}\n";
+              "Zillow Link: ${_selectedProperty!.zillowLink}\n";
+        }
+        if (_selectedProperty!.listingStatus != null) {
+          conversationHistory +=
+              "Listing Status: ${_selectedProperty!.listingStatus}\n";
+        }
+        if (_selectedProperty!.daysOnZillow != null) {
+          conversationHistory +=
+              "Days on Zillow: ${_selectedProperty!.daysOnZillow}\n";
+        }
+        if (_selectedProperty!.latitude != null &&
+            _selectedProperty!.longitude != null) {
+          conversationHistory +=
+              "Coordinates: (${_selectedProperty!.latitude}, ${_selectedProperty!.longitude})\n";
+        }
 
+        // Boolean features
         conversationHistory +=
-            "Has City View: ${_selectedProperty!.isCityView}\n";
+            "Has Pool: ${_selectedProperty!.hasPool ?? 'N/A'}\n";
         conversationHistory +=
-            "Has Mountain View: ${_selectedProperty!.isMountainView}\n";
+            "Has Air Conditioning: ${_selectedProperty!.hasAirConditioning ?? 'N/A'}\n";
         conversationHistory +=
-            "Has Water View: ${_selectedProperty!.isWaterView}\n";
+            "Has Garage: ${_selectedProperty!.hasGarage ?? 'N/A'}\n";
         conversationHistory +=
-            "Has Park View: ${_selectedProperty!.isParkView}\n";
+            "Parking Spots: ${_selectedProperty!.parkingSpots ?? 'N/A'}\n";
+        conversationHistory +=
+            "Has City View: ${_selectedProperty!.isCityView ?? 'N/A'}\n";
+        conversationHistory +=
+            "Has Mountain View: ${_selectedProperty!.isMountainView ?? 'N/A'}\n";
+        conversationHistory +=
+            "Has Water View: ${_selectedProperty!.isWaterView ?? 'N/A'}\n";
+        conversationHistory +=
+            "Has Park View: ${_selectedProperty!.isParkView ?? 'N/A'}\n";
+        conversationHistory +=
+            "Is 3D Home: ${_selectedProperty!.is3dHome ?? 'N/A'}\n";
+        conversationHistory +=
+            "Is Foreclosed: ${_selectedProperty!.isForeclosed ?? 'N/A'}\n";
+        conversationHistory +=
+            "Is Pre-Foreclosure: ${_selectedProperty!.isPreForeclosure ?? 'N/A'}\n";
+
+        // Detailed fields
+        if (_selectedProperty!.description != null) {
+          conversationHistory +=
+              "Description: ${_selectedProperty!.description}\n";
+        }
+        if (_selectedProperty!.county != null) {
+          conversationHistory += "County: ${_selectedProperty!.county}\n";
+        }
+        if (_selectedProperty!.city != null) {
+          conversationHistory += "City: ${_selectedProperty!.city}\n";
+        }
+        if (_selectedProperty!.state != null) {
+          conversationHistory += "State: ${_selectedProperty!.state}\n";
+        }
+        if (_selectedProperty!.zipcode != null) {
+          conversationHistory += "Zipcode: ${_selectedProperty!.zipcode}\n";
+        }
+        if (_selectedProperty!.timeOnZillow != null) {
+          conversationHistory +=
+              "Time on Zillow: ${_selectedProperty!.timeOnZillow}\n";
+        }
+        if (_selectedProperty!.pageViewCount != null) {
+          conversationHistory +=
+              "Page View Count: ${_selectedProperty!.pageViewCount}\n";
+        }
+        if (_selectedProperty!.favoriteCount != null) {
+          conversationHistory +=
+              "Favorite Count: ${_selectedProperty!.favoriteCount}\n";
+        }
+        if (_selectedProperty!.virtualTour != null) {
+          conversationHistory +=
+              "Virtual Tour: ${_selectedProperty!.virtualTour}\n";
+        }
+        if (_selectedProperty!.brokerageName != null) {
+          conversationHistory +=
+              "Brokerage Name: ${_selectedProperty!.brokerageName}\n";
+        }
+
+        // Agent info
+        if (_selectedProperty!.agentName != null) {
+          conversationHistory +=
+              "Agent Name: ${_selectedProperty!.agentName}\n";
+        }
+        if (_selectedProperty!.agentPhoneNumber != null) {
+          conversationHistory +=
+              "Agent Phone: ${_selectedProperty!.agentPhoneNumber}\n";
+        }
+        if (_selectedProperty!.brokerPhoneNumber != null) {
+          conversationHistory +=
+              "Broker Phone: ${_selectedProperty!.brokerPhoneNumber}\n";
+        }
+
+        // Property features
+        if (_selectedProperty!.stories != null) {
+          conversationHistory += "Stories: ${_selectedProperty!.stories}\n";
+        }
+        if (_selectedProperty!.levels != null) {
+          conversationHistory += "Levels: ${_selectedProperty!.levels}\n";
+        }
+        conversationHistory +=
+            "Has Fireplace: ${_selectedProperty!.hasFireplace ?? 'N/A'}\n";
+        if (_selectedProperty!.fireplaces != null) {
+          conversationHistory +=
+              "Fireplaces: ${_selectedProperty!.fireplaces}\n";
+        }
+        conversationHistory +=
+            "Has Basement: ${_selectedProperty!.basementYN ?? 'N/A'}\n";
+        if (_selectedProperty!.basement != null) {
+          conversationHistory += "Basement: ${_selectedProperty!.basement}\n";
+        }
+        if (_selectedProperty!.roofType != null) {
+          conversationHistory += "Roof Type: ${_selectedProperty!.roofType}\n";
+        }
+        if (_selectedProperty!.coolingSystem != null) {
+          conversationHistory +=
+              "Cooling System: ${_selectedProperty!.coolingSystem}\n";
+        }
+        if (_selectedProperty!.heatingSystem != null) {
+          conversationHistory +=
+              "Heating System: ${_selectedProperty!.heatingSystem}\n";
+        }
+
+        // Land details
+        if (_selectedProperty!.lotSize != null) {
+          conversationHistory += "Lot Size: ${_selectedProperty!.lotSize}\n";
+        }
+        if (_selectedProperty!.fencing != null) {
+          conversationHistory += "Fencing: ${_selectedProperty!.fencing}\n";
+        }
+
+        // Interior details
+        if (_selectedProperty!.bathroomsFull != null) {
+          conversationHistory +=
+              "Full Bathrooms: ${_selectedProperty!.bathroomsFull}\n";
+        }
+        if (_selectedProperty!.bathroomsHalf != null) {
+          conversationHistory +=
+              "Half Bathrooms: ${_selectedProperty!.bathroomsHalf}\n";
+        }
+        if (_selectedProperty!.aboveGradeFinishedArea != null) {
+          conversationHistory +=
+              "Above Grade Area: ${_selectedProperty!.aboveGradeFinishedArea}\n";
+        }
+        if (_selectedProperty!.belowGradeFinishedArea != null) {
+          conversationHistory +=
+              "Below Grade Area: ${_selectedProperty!.belowGradeFinishedArea}\n";
+        }
+
+        // Parking details
+        if (_selectedProperty!.parkingFeatures != null) {
+          conversationHistory +=
+              "Parking Features: ${_selectedProperty!.parkingFeatures}\n";
+        }
+        if (_selectedProperty!.parkingCapacity != null) {
+          conversationHistory +=
+              "Parking Capacity: ${_selectedProperty!.parkingCapacity}\n";
+        }
+        if (_selectedProperty!.garageParkingCapacity != null) {
+          conversationHistory +=
+              "Garage Parking Capacity: ${_selectedProperty!.garageParkingCapacity}\n";
+        }
+
+        // Additional features
+        if (_selectedProperty!.appliances != null) {
+          conversationHistory +=
+              "Appliances: ${_selectedProperty!.appliances}\n";
+        }
+        if (_selectedProperty!.interiorFeatures != null) {
+          conversationHistory +=
+              "Interior Features: ${_selectedProperty!.interiorFeatures}\n";
+        }
+        if (_selectedProperty!.exteriorFeatures != null) {
+          conversationHistory +=
+              "Exterior Features: ${_selectedProperty!.exteriorFeatures}\n";
+        }
+        if (_selectedProperty!.constructionMaterials != null) {
+          conversationHistory +=
+              "Construction Materials: ${_selectedProperty!.constructionMaterials}\n";
+        }
+        if (_selectedProperty!.patioAndPorchFeatures != null) {
+          conversationHistory +=
+              "Patio/Porch Features: ${_selectedProperty!.patioAndPorchFeatures}\n";
+        }
+        if (_selectedProperty!.laundryFeatures != null) {
+          conversationHistory +=
+              "Laundry Features: ${_selectedProperty!.laundryFeatures}\n";
+        }
+
+        // Metrics/Media
+        if (_selectedProperty!.pricePerSquareFoot != null) {
+          conversationHistory +=
+              "Price per Sqft: ${_selectedProperty!.pricePerSquareFoot}\n";
+        }
+        if (_selectedProperty!.photoCount != null) {
+          conversationHistory +=
+              "Photo Count: ${_selectedProperty!.photoCount}\n";
+        }
 
         conversationHistory += "\n";
       }
-      // If no property is selected, include all available properties for context
+// If no property is selected, include all available properties for context
       else if (_properties.isNotEmpty) {
         conversationHistory += "AVAILABLE_PROPERTIES:\n";
         for (int i = 0; i < _properties.length; i++) {
@@ -287,21 +483,28 @@ class _RealEstateAppState extends State<RealEstateApp>
           // Add additional property details that might be useful for answering questions
           List<String> additionalDetails = [];
           if (property.hasPool == true) additionalDetails.add("has pool");
-          if (property.hasAirConditioning == true)
+          if (property.hasAirConditioning == true) {
             additionalDetails.add("has air conditioning");
+          }
           if (property.hasGarage == true) additionalDetails.add("has garage");
-          if (property.parkingSpots != null && property.parkingSpots != "--")
+          if (property.parkingSpots != null && property.parkingSpots != "--") {
             additionalDetails.add("${property.parkingSpots} parking spots");
-          if (property.yearBuilt != null)
+          }
+          if (property.yearBuilt != null) {
             additionalDetails.add("built in ${property.yearBuilt}");
-          if (property.isCityView == true)
+          }
+          if (property.isCityView == true) {
             additionalDetails.add("has city view");
-          if (property.isMountainView == true)
+          }
+          if (property.isMountainView == true) {
             additionalDetails.add("has mountain view");
-          if (property.isWaterView == true)
+          }
+          if (property.isWaterView == true) {
             additionalDetails.add("has water view");
-          if (property.isParkView == true)
+          }
+          if (property.isParkView == true) {
             additionalDetails.add("has park view");
+          }
 
           if (additionalDetails.isNotEmpty) {
             conversationHistory += " (${additionalDetails.join(", ")})";
@@ -310,9 +513,7 @@ class _RealEstateAppState extends State<RealEstateApp>
           conversationHistory += "\n";
         }
         conversationHistory += "\n";
-      }
-
-      // Get all messages in chronological order (oldest first)
+      } // Get all messages in chronological order (oldest first)
       final messagesInOrder = _messages.reversed.toList();
 
       // Add conversation history
