@@ -175,6 +175,7 @@ class _LoginPageState extends State<LoginPage> {
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
+                          cursorColor: Color.fromRGBO(27, 94, 32, 1),
                           decoration: InputDecoration(
                             labelText: 'Email',
                             labelStyle:
@@ -214,6 +215,8 @@ class _LoginPageState extends State<LoginPage> {
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
+                                                    cursorColor: Color.fromRGBO(27, 94, 32, 1),
+
                           decoration: InputDecoration(
                             labelText: 'Password',
                             labelStyle:

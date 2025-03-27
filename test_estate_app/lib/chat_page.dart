@@ -1780,41 +1780,41 @@ class _RealEstateAppState extends State<RealEstateApp>
     super.build(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: AppBar(
-          primary: false,
-          backgroundColor: Colors.transparent,
-          surfaceTintColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          elevation: 200,
-          flexibleSpace: Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: EdgeInsets.only(left: 0, top: 4, right: 0),
-              child: Container(
-                height: 60,
-                width: 70,
-                decoration: BoxDecoration(
-                  color: Color.fromRGBO(143, 206, 157, 1),
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    Icons.history,
-                    color: Colors.black,
-                    size: 35,
-                  ),
-                  onPressed: () {},
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+      // appBar: PreferredSize(
+      //   preferredSize: Size.fromHeight(60),
+      //   child: AppBar(
+      //     primary: false,
+      //     backgroundColor: Colors.transparent,
+      //     surfaceTintColor: Colors.transparent,
+      //     shadowColor: Colors.transparent,
+      //     elevation: 200,
+      //     flexibleSpace: Align(
+      //       alignment: Alignment.centerLeft,
+      //       child: Padding(
+      //         padding: EdgeInsets.only(left: 0, top: 4, right: 0),
+      //         child: Container(
+      //           height: 60,
+      //           width: 70,
+      //           decoration: BoxDecoration(
+      //             color: Color.fromRGBO(143, 206, 157, 1),
+      //             borderRadius: BorderRadius.only(
+      //               topRight: Radius.circular(30),
+      //               bottomRight: Radius.circular(30),
+      //             ),
+      //           ),
+      //           child: IconButton(
+      //             icon: Icon(
+      //               Icons.history,
+      //               color: Colors.black,
+      //               size: 35,
+      //             ),
+      //             onPressed: () {},
+      //           ),
+      //         ),
+      //       ),
+      //     ),
+      //   ),
+      // ),
       backgroundColor: Colors.white,
       body: Stack(
         children: [

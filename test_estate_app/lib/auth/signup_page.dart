@@ -164,6 +164,8 @@ class _SignupPageState extends State<SignupPage> {
                         // Name Field
                         TextFormField(
                           controller: _nameController,
+                                                    cursorColor: Color.fromRGBO(27, 94, 32, 1),
+
                           decoration: InputDecoration(
                             labelText: 'Full Name',
                             labelStyle:
@@ -198,6 +200,8 @@ class _SignupPageState extends State<SignupPage> {
                         // Email Field
                         TextFormField(
                           controller: _emailController,
+                                                    cursorColor: Color.fromRGBO(27, 94, 32, 1),
+
                           keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
                             labelText: 'Email',
@@ -237,6 +241,8 @@ class _SignupPageState extends State<SignupPage> {
                         // Password Field
                         TextFormField(
                           controller: _passwordController,
+                                                    cursorColor: Color.fromRGBO(27, 94, 32, 1),
+
                           obscureText: _obscurePassword,
                           decoration: InputDecoration(
                             labelText: 'Password',
@@ -288,6 +294,8 @@ class _SignupPageState extends State<SignupPage> {
                         // Confirm Password Field
                         TextFormField(
                           controller: _confirmPasswordController,
+                                                    cursorColor: Color.fromRGBO(27, 94, 32, 1),
+
                           obscureText: _obscureConfirmPassword,
                           decoration: InputDecoration(
                             labelText: 'Confirm Password',
