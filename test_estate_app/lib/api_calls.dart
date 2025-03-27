@@ -94,6 +94,7 @@ class ApiCalls {
           'propertyData': propertyData,
         }),
       );
+      //print(propertyData);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
