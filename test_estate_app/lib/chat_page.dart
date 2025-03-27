@@ -1106,7 +1106,6 @@ class _RealEstateAppState extends State<RealEstateApp>
                                               ),
                                             ),
                                             SizedBox(height: 4),
-                                          
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
@@ -1823,8 +1822,8 @@ class _RealEstateAppState extends State<RealEstateApp>
               edges: [
                 EdgeBlur(
                   type: EdgeType.topEdge,
-                  size: 200,
-                  sigma: 30,
+                  size: 180,
+                  sigma: 60,
                   controlPoints: [
                     ControlPoint(position: 0.5, type: ControlPointType.visible),
                     ControlPoint(
@@ -1843,20 +1842,34 @@ class _RealEstateAppState extends State<RealEstateApp>
                   ),
                   theme: const DefaultChatTheme(
                     backgroundColor: Colors.white,
-                    inputBackgroundColor: Color.fromRGBO(217, 217, 217, 1),
+                    inputBackgroundColor: Colors.transparent,
                     primaryColor: Color.fromRGBO(88, 88, 88, 1),
-                    inputBorderRadius: BorderRadius.all(Radius.circular(30)),
+                    inputBorderRadius: BorderRadius.all(Radius.circular(0)),
                     inputTextColor: Colors.black,
-                    inputMargin: EdgeInsets.fromLTRB(20, 20, 20, 30),
-                    sendButtonIcon: Icon(Icons.send),
+                    inputMargin: EdgeInsets.fromLTRB(0, 0, 0, 0),
+                    sendButtonIcon: Icon(Icons.send,
+                        size: 24, color: Color.fromRGBO(4, 36, 6, 1)),
                     secondaryColor: Color.fromRGBO(52, 99, 56, 1),
                     highlightMessageColor: Colors.white,
                     receivedMessageBodyTextStyle:
                         TextStyle(color: Colors.white, fontSize: 17),
                     sentMessageBodyTextStyle:
                         TextStyle(color: Colors.white, fontSize: 17),
-                    inputTextCursorColor: Colors.black,
-                    inputPadding: EdgeInsets.all(10),
+                    inputTextCursorColor: Color.fromRGBO(4, 36, 6, 1),
+                    inputPadding: EdgeInsets.fromLTRB(12, 20, 12, 25),
+                    inputContainerDecoration: BoxDecoration(
+                      color: Color.fromRGBO(240, 240, 240, 0.201),
+                      borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          // blurRadius: 4,
+                          // offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

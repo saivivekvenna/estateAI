@@ -58,7 +58,7 @@ class MainAppContent extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60),
+        preferredSize: Size.fromHeight(50),
         child: AppBar(
           primary: false,
           backgroundColor: Colors.transparent,
@@ -68,34 +68,19 @@ class MainAppContent extends StatelessWidget {
           flexibleSpace: Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: EdgeInsets.only(bottom: 0, left: 90, right: 90),
-              child: Container(
+              padding: EdgeInsets.only(bottom: 0, left: 20, right: 20),
+              child: SizedBox(
                 height: 60,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color.fromRGBO(143, 206, 157, 1), // Lighter green
-                      Color.fromRGBO(143, 206, 157, 1),   // Medium green (lighter than before)
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildTabIcon(Icons.search, 0, Colors.white),
-                    _buildTabIcon(
-                        Icons.swipe_down_rounded, 1, Colors.white),
-                    _buildTabIcon(Icons.notifications, 2, Colors.white),
+                    _buildTabIcon(Icons.menu_rounded, 0, Colors.black),
+                    // _buildTabIcon(
+                    //     Icons.swipe_down_rounded, 1, Colors.white),
+                    // SizedBox(
+                    //   width: 200,
+                    // ),
+                    _buildTabIcon(Icons.add_circle, 1, Colors.black),
                   ],
                 ),
               ),
@@ -109,7 +94,6 @@ class MainAppContent extends StatelessWidget {
             index: selectedIndex,
             children: const [
               RealEstateApp(),
-              SwiperPage(),
               NotiPage(),
             ],
           ),
@@ -129,8 +113,8 @@ class MainAppContent extends StatelessWidget {
     return IconButton(
       icon: Icon(
         icon,
-        color: selectedIndex == index ? activeColor : Colors.black,
-        size: 40,
+        color: Color.fromRGBO(7, 77, 12, 0.8),
+        size: 35,
       ),
       onPressed: () {
         onIndexChanged(index);
@@ -138,4 +122,3 @@ class MainAppContent extends StatelessWidget {
     );
   }
 }
-
