@@ -1210,7 +1210,7 @@ class _RealEstateAppState extends State<RealEstateApp>
   }
 
   Widget _propertyFeatureChipResizable(
-      IconData icon, String label, bool isFullScreen) {
+      String label, bool isFullScreen) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -1220,9 +1220,9 @@ class _RealEstateAppState extends State<RealEstateApp>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon,
-              size: isFullScreen ? 18 : 14,
-              color: Color.fromRGBO(27, 94, 32, 1)),
+          // Icon(icon,
+          //     size: isFullScreen ? 18 : 14,
+          //     color: Color.fromRGBO(27, 94, 32, 1)),
           SizedBox(width: 4),
           Text(
             label,
@@ -1283,17 +1283,17 @@ class _RealEstateAppState extends State<RealEstateApp>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _propertyFeatureChipResizable(
-                  Icons.bed,
+                  //Icons.bed,
                   "${property.bedrooms} Beds",
                   isFullScreen,
                 ),
                 _propertyFeatureChipResizable(
-                  Icons.bathtub,
+                  //Icons.bathtub,
                   "${property.bathrooms} Baths",
                   isFullScreen,
                 ),
                 _propertyFeatureChipResizable(
-                  Icons.square_foot,
+                  //Icons.square_foot,
                   property.formattedLivingArea,
                   isFullScreen,
                 ),
