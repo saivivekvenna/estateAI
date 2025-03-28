@@ -86,7 +86,7 @@ class Property {
   final int? photoCount;
 
   String get formattedLivingArea {
-    if (livingArea == null || livingArea == '--') return 'N/A';
+    if (livingArea == null || livingArea == '--') return '-- sqft';
     return '$livingArea sqft';
   }
 

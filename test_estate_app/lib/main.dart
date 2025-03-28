@@ -95,84 +95,92 @@ class MainAppContent extends StatelessWidget {
         backgroundColor: Colors.white,
         child: Column(
           children: [
-            // Main Drawer items above the header
-            Padding(
-              padding: const EdgeInsets.only(left: 25),
-              child: SizedBox(
-                height: 70,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 10),
-              child: ListTile(
-                leading: Icon(Icons.update),
-                title: Text("Updates"),
-                onTap: () {},
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 10),
-              child: ListTile(
-                leading: Icon(Icons.feedback),
-                title: Text("Feedback"),
-                onTap: () {},
-              ),
-            ),
-            Divider(),
+            // Spacing at the top
+            SizedBox(height: 55),
 
+            // Main drawer items
             Padding(
-              padding: const EdgeInsets.only(left: 10),
-              child: ListTile(
-                title: Text("Chat History"),
-                onTap: () {},
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Column(
+                children: [
+                  _buildListTitle("Updates", Color.fromRGBO(27, 94, 32, 1)),
+                  _buildListTitle(
+                      "Developer Feedback", Color.fromRGBO(27, 94, 32, 1)),
+                  Divider(thickness: 1, indent: 15, endIndent: 15),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 15),
+                    child: Text(
+                      "Chat History",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color.fromRGBO(27, 94, 32, 1),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+
+// Chat history list
             Expanded(
               child: ListView.builder(
-                padding: EdgeInsets.fromLTRB(10, 0, 0, 0),
-                itemCount: 20, // Replace with actual chat history count
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                itemCount: 20, // Replace with actual count
                 itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text("Chat $index"),
-                    onTap: () {},
-                  );
+                  return _buildListTitle(
+                      "Chat $index", const Color.fromARGB(255, 62, 61, 61));
                 },
               ),
             ),
 
-            // Adding the header at the bottom of the drawer
+// Bottom account header
             Container(
-              padding: EdgeInsets.fromLTRB(25, 20, 20, 30),
+              padding: EdgeInsets.fromLTRB(20, 15, 20, 30),
               decoration: BoxDecoration(
-                color:
-                    const Color.fromARGB(255, 240, 239, 239), // Matching color
+                color: Color.fromARGB(255, 240, 239, 239),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
                 ),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.grey,
-                    child: Icon(Icons.person, size: 25, color: Colors.white),
-                  ),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  Text(
-                    "Liam Desouza",
-                    style: TextStyle(
-                      color: Color.fromRGBO(27, 94, 32, 1),
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius:
+                      BorderRadius.circular(20),
+                  onTap: () {
+                    print("Account header tapped");
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.grey,
+                              child: Icon(Icons.person,
+                                  size: 25, color: Colors.white),
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              "Liam Desouza",
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Icon(Icons.more_vert, color: Colors.black54),
+                      ],
                     ),
                   ),
-                  SizedBox(width: 52),
-                  IconButton(onPressed: () {}, icon: Icon(Icons.menu)),
-                ],
+                ),
               ),
             ),
           ],
@@ -189,6 +197,31 @@ class MainAppContent extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildListTitle(String title, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 5),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius:
+              BorderRadius.circular(15), // Keeps splash inside rounded shape
+          onTap: () {
+            print("$title tapped");
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
+            child: Center(
+              child: Text(
+                title,
+                style: TextStyle(fontSize: 16, color: color),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
