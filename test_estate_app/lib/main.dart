@@ -148,8 +148,7 @@ class MainAppContent extends StatelessWidget {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  borderRadius:
-                      BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(20),
                   onTap: () {
                     print("Account header tapped");
                   },

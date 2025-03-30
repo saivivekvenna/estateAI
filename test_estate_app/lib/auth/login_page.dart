@@ -89,16 +89,7 @@ class _LoginPageState extends State<LoginPage> {
         children: [
           // Background gradient
           Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color.fromRGBO(129, 199, 132, 0.3),
-                  Color.fromRGBO(76, 175, 80, 0.1),
-                ],
-              ),
-            ),
+            decoration: BoxDecoration(color: Color.fromRGBO(220, 237, 221, 1)),
           ),
           SafeArea(
             child: Center(
@@ -111,29 +102,16 @@ class _LoginPageState extends State<LoginPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Logo or App Name
-                        Container(
-                          height: 100,
-                          width: 100,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Color.fromRGBO(27, 94, 32, 1),
-                                Color.fromRGBO(27, 94, 32, 1),
-                              ],
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.home,
-                            size: 60,
-                            color: Colors.white,
-                          ),
+                        const SizedBox(height: 10),
+
+                        Image.asset(
+                          'assets/icon/welcome_page_icon.png',
+                          height: 150,
+                          width: 150,
+                          fit: BoxFit
+                              .contain, // Adjusts how the image fits in the space
                         ),
                         const SizedBox(height: 32),
-
                         // Welcome Text
                         Text(
                           'Welcome Back',
@@ -215,8 +193,7 @@ class _LoginPageState extends State<LoginPage> {
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
-                                                    cursorColor: Color.fromRGBO(27, 94, 32, 1),
-
+                          cursorColor: Color.fromRGBO(27, 94, 32, 1),
                           decoration: InputDecoration(
                             labelText: 'Password',
                             labelStyle:
