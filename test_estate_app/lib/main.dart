@@ -77,7 +77,8 @@ class MainAppContent extends StatelessWidget {
                     children: [
                       IconButton(
                         icon: Icon(Icons.menu_rounded,
-                            size: 35, color: Color.fromRGBO(7, 77, 12, 0.8)),
+                            size: 40, color: Color.fromRGBO(7, 77, 12, 0.8)),
+
                         onPressed: () {
                           Scaffold.of(context).openDrawer();
                         },
@@ -227,7 +228,7 @@ class MainAppContent extends StatelessWidget {
 
   Widget _buildTabIcon(IconData icon, int index, Color activeColor) {
     return IconButton(
-      icon: Icon(icon, color: Color.fromRGBO(7, 77, 12, 0.8), size: 35),
+      icon: Icon(icon, color: Color.fromRGBO(7, 77, 12, 0.8), size: 40),
       onPressed: () {
         onIndexChanged(index);
       },

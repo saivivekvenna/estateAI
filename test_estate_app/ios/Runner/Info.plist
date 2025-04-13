@@ -6,6 +6,8 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs your location to search for properties near you.</string>
 	<key>CFBundleDisplayName</key>
 	<string>Estate AI</string>
 	<key>CFBundleExecutable</key>
