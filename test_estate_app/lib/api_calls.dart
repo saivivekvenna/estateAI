@@ -1,12 +1,11 @@
-/*each call for diffrent endpoint for server. three endpoints right now, 
-1. basic chat operation
-2. swipe for location to show similar properties 
-3. swipe to see more info to show images 
+/* API calls for different server endpoints:
+1. search: Basic chat operation for property search
+2. details: Fetch detailed property information
+3. images: Fetch property images on swipe
 */
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'dart:math';
 
 class ApiCalls {
   final String baseUrl = 'http://localhost:5000'; // Adjust for your environment
@@ -41,6 +40,25 @@ class ApiCalls {
     }
   }
 
+  Future<Map<String, dynamic>> getPropertyDetails(String propertyId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/details'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'zpid': propertyId,
+        }),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to get property details: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
   Future<Map<String, dynamic>> getPropertyImages(String propertyId) async {
     try {
       final response = await http.post(
@@ -54,29 +72,6 @@ class ApiCalls {
         return jsonDecode(response.body);
       } else {
         throw Exception('Failed to get property images: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Network error: $e');
-    }
-  }
-
-  Future<Map<String, dynamic>> getSimilarProperties(
-    Map<String, dynamic> propertyData,
-    String mapCoordinates,
-  ) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/more-properties'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'propertyData': propertyData,
-          'mapCoordinates': mapCoordinates,
-        }),
-      );
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception('Failed to get similar properties: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Network error: $e');
