@@ -36,8 +36,15 @@ class _RealEstateAppState extends State<RealEstateApp>
   bool _isNearMeMode = false;
   Position? _lastKnownPosition;
 
+  List<String> filterOptions = <String>[
+    "Top Results",
+    "Price: Low to High",
+    "Price: High to Low",
+  ];
+  String dropdownValue = "Top Results";
+
   List<Property> _properties = [];
-  List<Property> _visibleProperties = []; // tracks properties within map bounds
+  List<Property> _visibleProperties = [];
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -153,14 +160,16 @@ class _RealEstateAppState extends State<RealEstateApp>
         desiredAccuracy: LocationAccuracy.high,
       );
       setState(() {
-        _mapCenter = LatLng(_lastKnownPosition!.latitude, _lastKnownPosition!.longitude);
+        _mapCenter =
+            LatLng(_lastKnownPosition!.latitude, _lastKnownPosition!.longitude);
       });
 
       if (_backgroundMapController != null) {
         await _backgroundMapController!.animateCamera(
           CameraUpdate.newCameraPosition(
             CameraPosition(
-              target: LatLng(_lastKnownPosition!.latitude, _lastKnownPosition!.longitude),
+              target: LatLng(
+                  _lastKnownPosition!.latitude, _lastKnownPosition!.longitude),
               zoom: 12.0,
             ),
           ),
@@ -203,7 +212,9 @@ class _RealEstateAppState extends State<RealEstateApp>
     canvas.drawCircle(
       Offset(size / 2, size / 2),
       size / 2,
-      Paint()..color = Colors.white..style = PaintingStyle.fill,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill,
     );
     canvas.drawCircle(
       Offset(size / 2, size / 2),
@@ -211,7 +222,9 @@ class _RealEstateAppState extends State<RealEstateApp>
       paint..style = PaintingStyle.fill,
     );
 
-    final img = await pictureRecorder.endRecording().toImage(size.toInt(), size.toInt());
+    final img = await pictureRecorder
+        .endRecording()
+        .toImage(size.toInt(), size.toInt());
     final data = await img.toByteData(format: ui.ImageByteFormat.png);
     return BitmapDescriptor.fromBytes(data!.buffer.asUint8List());
   }
@@ -236,6 +249,18 @@ class _RealEstateAppState extends State<RealEstateApp>
       } else {
         _selectedProperty = property;
         _selectedPropertyId = propertyId;
+        _isListViewVisible = false; // Switch to chat view
+        // Add property card as a user message
+        final customMessage = types.CustomMessage(
+          author: _user,
+          createdAt: DateTime.now().millisecondsSinceEpoch,
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          metadata: {
+            'type': 'selected_property',
+            'property': property.toJson(),
+          },
+        );
+        _messages.insert(0, customMessage);
       }
     });
   }
@@ -301,51 +326,74 @@ class _RealEstateAppState extends State<RealEstateApp>
 
       if (_selectedProperty != null) {
         selectedPropertyData = _selectedProperty!.toJson();
-        conversationHistory += "SELECTED_PROPERTY_QUERY: true\n\nSELECTED_PROPERTY:\n";
+        conversationHistory +=
+            "SELECTED_PROPERTY_QUERY: true\n\nSELECTED_PROPERTY:\n";
         conversationHistory += "Address: ${_selectedProperty!.address}\n";
         conversationHistory += "Price: ${_selectedProperty!.price}\n";
         conversationHistory += "Bedrooms: ${_selectedProperty!.bedrooms}\n";
         conversationHistory += "Bathrooms: ${_selectedProperty!.bathrooms}\n";
-        conversationHistory += "Living Area: ${_selectedProperty!.formattedLivingArea}\n";
-        conversationHistory += "Property Type: ${_selectedProperty!.propertyType}\n";
+        conversationHistory +=
+            "Living Area: ${_selectedProperty!.formattedLivingArea}\n";
+        conversationHistory +=
+            "Property Type: ${_selectedProperty!.propertyType}\n";
         conversationHistory += "ZPID: ${_selectedProperty!.zpid}\n";
         if (_selectedProperty!.photoURL != null) {
           conversationHistory += "Photo URL: ${_selectedProperty!.photoURL}\n";
         }
         if (_selectedProperty!.imageUrls.isNotEmpty) {
-          conversationHistory += "Image URLs: ${_selectedProperty!.imageUrls.join(', ')}\n";
+          conversationHistory +=
+              "Image URLs: ${_selectedProperty!.imageUrls.join(', ')}\n";
         }
         if (_selectedProperty!.lotAreaValue != null) {
-          conversationHistory += "Lot Area Value: ${_selectedProperty!.lotAreaValue} ${_selectedProperty!.lotAreaUnit ?? ''}\n";
+          conversationHistory +=
+              "Lot Area Value: ${_selectedProperty!.lotAreaValue} ${_selectedProperty!.lotAreaUnit ?? ''}\n";
         }
         if (_selectedProperty!.yearBuilt != null) {
-          conversationHistory += "Year Built: ${_selectedProperty!.yearBuilt}\n";
+          conversationHistory +=
+              "Year Built: ${_selectedProperty!.yearBuilt}\n";
         }
         if (_selectedProperty!.zillowLink != null) {
-          conversationHistory += "Zillow Link: ${_selectedProperty!.zillowLink}\n";
+          conversationHistory +=
+              "Zillow Link: ${_selectedProperty!.zillowLink}\n";
         }
         if (_selectedProperty!.listingStatus != null) {
-          conversationHistory += "Listing Status: ${_selectedProperty!.listingStatus}\n";
+          conversationHistory +=
+              "Listing Status: ${_selectedProperty!.listingStatus}\n";
         }
         if (_selectedProperty!.daysOnZillow != null) {
-          conversationHistory += "Days on Zillow: ${_selectedProperty!.daysOnZillow}\n";
+          conversationHistory +=
+              "Days on Zillow: ${_selectedProperty!.daysOnZillow}\n";
         }
-        if (_selectedProperty!.latitude != null && _selectedProperty!.longitude != null) {
-          conversationHistory += "Coordinates: (${_selectedProperty!.latitude}, ${_selectedProperty!.longitude})\n";
+        if (_selectedProperty!.latitude != null &&
+            _selectedProperty!.longitude != null) {
+          conversationHistory +=
+              "Coordinates: (${_selectedProperty!.latitude}, ${_selectedProperty!.longitude})\n";
         }
-        conversationHistory += "Has Pool: ${_selectedProperty!.hasPool ?? 'N/A'}\n";
-        conversationHistory += "Has Air Conditioning: ${_selectedProperty!.hasAirConditioning ?? 'N/A'}\n";
-        conversationHistory += "Has Garage: ${_selectedProperty!.hasGarage ?? 'N/A'}\n";
-        conversationHistory += "Parking Spots: ${_selectedProperty!.parkingSpots ?? 'N/A'}\n";
-        conversationHistory += "Has City View: ${_selectedProperty!.isCityView ?? 'N/A'}\n";
-        conversationHistory += "Has Mountain View: ${_selectedProperty!.isMountainView ?? 'N/A'}\n";
-        conversationHistory += "Has Water View: ${_selectedProperty!.isWaterView ?? 'N/A'}\n";
-        conversationHistory += "Has Park View: ${_selectedProperty!.isParkView ?? 'N/A'}\n";
-        conversationHistory += "Is 3D Home: ${_selectedProperty!.is3dHome ?? 'N/A'}\n";
-        conversationHistory += "Is Foreclosed: ${_selectedProperty!.isForeclosed ?? 'N/A'}\n";
-        conversationHistory += "Is Pre-Foreclosure: ${_selectedProperty!.isPreForeclosure ?? 'N/A'}\n";
+        conversationHistory +=
+            "Has Pool: ${_selectedProperty!.hasPool ?? 'N/A'}\n";
+        conversationHistory +=
+            "Has Air Conditioning: ${_selectedProperty!.hasAirConditioning ?? 'N/A'}\n";
+        conversationHistory +=
+            "Has Garage: ${_selectedProperty!.hasGarage ?? 'N/A'}\n";
+        conversationHistory +=
+            "Parking Spots: ${_selectedProperty!.parkingSpots ?? 'N/A'}\n";
+        conversationHistory +=
+            "Has City View: ${_selectedProperty!.isCityView ?? 'N/A'}\n";
+        conversationHistory +=
+            "Has Mountain View: ${_selectedProperty!.isMountainView ?? 'N/A'}\n";
+        conversationHistory +=
+            "Has Water View: ${_selectedProperty!.isWaterView ?? 'N/A'}\n";
+        conversationHistory +=
+            "Has Park View: ${_selectedProperty!.isParkView ?? 'N/A'}\n";
+        conversationHistory +=
+            "Is 3D Home: ${_selectedProperty!.is3dHome ?? 'N/A'}\n";
+        conversationHistory +=
+            "Is Foreclosed: ${_selectedProperty!.isForeclosed ?? 'N/A'}\n";
+        conversationHistory +=
+            "Is Pre-Foreclosure: ${_selectedProperty!.isPreForeclosure ?? 'N/A'}\n";
         if (_selectedProperty!.description != null) {
-          conversationHistory += "Description: ${_selectedProperty!.description}\n";
+          conversationHistory +=
+              "Description: ${_selectedProperty!.description}\n";
         }
         if (_selectedProperty!.county != null) {
           conversationHistory += "County: ${_selectedProperty!.county}\n";
@@ -360,28 +408,36 @@ class _RealEstateAppState extends State<RealEstateApp>
           conversationHistory += "Zipcode: ${_selectedProperty!.zipcode}\n";
         }
         if (_selectedProperty!.timeOnZillow != null) {
-          conversationHistory += "Time on Zillow: ${_selectedProperty!.timeOnZillow}\n";
+          conversationHistory +=
+              "Time on Zillow: ${_selectedProperty!.timeOnZillow}\n";
         }
         if (_selectedProperty!.pageViewCount != null) {
-          conversationHistory += "Page View Count: ${_selectedProperty!.pageViewCount}\n";
+          conversationHistory +=
+              "Page View Count: ${_selectedProperty!.pageViewCount}\n";
         }
         if (_selectedProperty!.favoriteCount != null) {
-          conversationHistory += "Favorite Count: ${_selectedProperty!.favoriteCount}\n";
+          conversationHistory +=
+              "Favorite Count: ${_selectedProperty!.favoriteCount}\n";
         }
         if (_selectedProperty!.virtualTour != null) {
-          conversationHistory += "Virtual Tour: ${_selectedProperty!.virtualTour}\n";
+          conversationHistory +=
+              "Virtual Tour: ${_selectedProperty!.virtualTour}\n";
         }
         if (_selectedProperty!.brokerageName != null) {
-          conversationHistory += "Brokerage Name: ${_selectedProperty!.brokerageName}\n";
+          conversationHistory +=
+              "Brokerage Name: ${_selectedProperty!.brokerageName}\n";
         }
         if (_selectedProperty!.agentName != null) {
-          conversationHistory += "Agent Name: ${_selectedProperty!.agentName}\n";
+          conversationHistory +=
+              "Agent Name: ${_selectedProperty!.agentName}\n";
         }
         if (_selectedProperty!.agentPhoneNumber != null) {
-          conversationHistory += "Agent Phone: ${_selectedProperty!.agentPhoneNumber}\n";
+          conversationHistory +=
+              "Agent Phone: ${_selectedProperty!.agentPhoneNumber}\n";
         }
         if (_selectedProperty!.brokerPhoneNumber != null) {
-          conversationHistory += "Broker Phone: ${_selectedProperty!.brokerPhoneNumber}\n";
+          conversationHistory +=
+              "Broker Phone: ${_selectedProperty!.brokerPhoneNumber}\n";
         }
         if (_selectedProperty!.stories != null) {
           conversationHistory += "Stories: ${_selectedProperty!.stories}\n";
@@ -389,11 +445,14 @@ class _RealEstateAppState extends State<RealEstateApp>
         if (_selectedProperty!.levels != null) {
           conversationHistory += "Levels: ${_selectedProperty!.levels}\n";
         }
-        conversationHistory += "Has Fireplace: ${_selectedProperty!.hasFireplace ?? 'N/A'}\n";
+        conversationHistory +=
+            "Has Fireplace: ${_selectedProperty!.hasFireplace ?? 'N/A'}\n";
         if (_selectedProperty!.fireplaces != null) {
-          conversationHistory += "Fireplaces: ${_selectedProperty!.fireplaces}\n";
+          conversationHistory +=
+              "Fireplaces: ${_selectedProperty!.fireplaces}\n";
         }
-        conversationHistory += "Has Basement: ${_selectedProperty!.basementYN ?? 'N/A'}\n";
+        conversationHistory +=
+            "Has Basement: ${_selectedProperty!.basementYN ?? 'N/A'}\n";
         if (_selectedProperty!.basement != null) {
           conversationHistory += "Basement: ${_selectedProperty!.basement}\n";
         }
@@ -401,10 +460,12 @@ class _RealEstateAppState extends State<RealEstateApp>
           conversationHistory += "Roof Type: ${_selectedProperty!.roofType}\n";
         }
         if (_selectedProperty!.coolingSystem != null) {
-          conversationHistory += "Cooling System: ${_selectedProperty!.coolingSystem}\n";
+          conversationHistory +=
+              "Cooling System: ${_selectedProperty!.coolingSystem}\n";
         }
         if (_selectedProperty!.heatingSystem != null) {
-          conversationHistory += "Heating System: ${_selectedProperty!.heatingSystem}\n";
+          conversationHistory +=
+              "Heating System: ${_selectedProperty!.heatingSystem}\n";
         }
         if (_selectedProperty!.lotSize != null) {
           conversationHistory += "Lot Size: ${_selectedProperty!.lotSize}\n";
@@ -413,49 +474,64 @@ class _RealEstateAppState extends State<RealEstateApp>
           conversationHistory += "Fencing: ${_selectedProperty!.fencing}\n";
         }
         if (_selectedProperty!.bathroomsFull != null) {
-          conversationHistory += "Full Bathrooms: ${_selectedProperty!.bathroomsFull}\n";
+          conversationHistory +=
+              "Full Bathrooms: ${_selectedProperty!.bathroomsFull}\n";
         }
         if (_selectedProperty!.bathroomsHalf != null) {
-          conversationHistory += "Half Bathrooms: ${_selectedProperty!.bathroomsHalf}\n";
+          conversationHistory +=
+              "Half Bathrooms: ${_selectedProperty!.bathroomsHalf}\n";
         }
         if (_selectedProperty!.aboveGradeFinishedArea != null) {
-          conversationHistory += "Above Grade Area: ${_selectedProperty!.aboveGradeFinishedArea}\n";
+          conversationHistory +=
+              "Above Grade Area: ${_selectedProperty!.aboveGradeFinishedArea}\n";
         }
         if (_selectedProperty!.belowGradeFinishedArea != null) {
-          conversationHistory += "Below Grade Area: ${_selectedProperty!.belowGradeFinishedArea}\n";
+          conversationHistory +=
+              "Below Grade Area: ${_selectedProperty!.belowGradeFinishedArea}\n";
         }
         if (_selectedProperty!.parkingFeatures != null) {
-          conversationHistory += "Parking Features: ${_selectedProperty!.parkingFeatures}\n";
+          conversationHistory +=
+              "Parking Features: ${_selectedProperty!.parkingFeatures}\n";
         }
         if (_selectedProperty!.parkingCapacity != null) {
-          conversationHistory += "Parking Capacity: ${_selectedProperty!.parkingCapacity}\n";
+          conversationHistory +=
+              "Parking Capacity: ${_selectedProperty!.parkingCapacity}\n";
         }
         if (_selectedProperty!.garageParkingCapacity != null) {
-          conversationHistory += "Garage Parking Capacity: ${_selectedProperty!.garageParkingCapacity}\n";
+          conversationHistory +=
+              "Garage Parking Capacity: ${_selectedProperty!.garageParkingCapacity}\n";
         }
         if (_selectedProperty!.appliances != null) {
-          conversationHistory += "Appliances: ${_selectedProperty!.appliances}\n";
+          conversationHistory +=
+              "Appliances: ${_selectedProperty!.appliances}\n";
         }
         if (_selectedProperty!.interiorFeatures != null) {
-          conversationHistory += "Interior Features: ${_selectedProperty!.interiorFeatures}\n";
+          conversationHistory +=
+              "Interior Features: ${_selectedProperty!.interiorFeatures}\n";
         }
         if (_selectedProperty!.exteriorFeatures != null) {
-          conversationHistory += "Exterior Features: ${_selectedProperty!.exteriorFeatures}\n";
+          conversationHistory +=
+              "Exterior Features: ${_selectedProperty!.exteriorFeatures}\n";
         }
         if (_selectedProperty!.constructionMaterials != null) {
-          conversationHistory += "Construction Materials: ${_selectedProperty!.constructionMaterials}\n";
+          conversationHistory +=
+              "Construction Materials: ${_selectedProperty!.constructionMaterials}\n";
         }
         if (_selectedProperty!.patioAndPorchFeatures != null) {
-          conversationHistory += "Patio/Porch Features: ${_selectedProperty!.patioAndPorchFeatures}\n";
+          conversationHistory +=
+              "Patio/Porch Features: ${_selectedProperty!.patioAndPorchFeatures}\n";
         }
         if (_selectedProperty!.laundryFeatures != null) {
-          conversationHistory += "Laundry Features: ${_selectedProperty!.laundryFeatures}\n";
+          conversationHistory +=
+              "Laundry Features: ${_selectedProperty!.laundryFeatures}\n";
         }
         if (_selectedProperty!.pricePerSquareFoot != null) {
-          conversationHistory += "Price per Sqft: ${_selectedProperty!.pricePerSquareFoot}\n";
+          conversationHistory +=
+              "Price per Sqft: ${_selectedProperty!.pricePerSquareFoot}\n";
         }
         if (_selectedProperty!.photoCount != null) {
-          conversationHistory += "Photo Count: ${_selectedProperty!.photoCount}\n";
+          conversationHistory +=
+              "Photo Count: ${_selectedProperty!.photoCount}\n";
         }
         conversationHistory += "\n";
       } else if (_properties.isNotEmpty) {
@@ -531,8 +607,9 @@ class _RealEstateAppState extends State<RealEstateApp>
         setState(() {
           _selectedProperty = null;
           _selectedPropertyId = null;
-          _properties = propertyResults.map((json) => Property.fromJson(json)).toList();
-          _visibleProperties = _properties; // Initially show all
+          _properties =
+              propertyResults.map((json) => Property.fromJson(json)).toList();
+          _visibleProperties = _properties;
         });
         _addCombinedResponse(_properties, agentResponse);
         _updateVisibleProperties();
@@ -552,7 +629,8 @@ class _RealEstateAppState extends State<RealEstateApp>
     }
   }
 
-  void _showFullScreenProperty(Property property, String propertyId, bool isMapView) {
+  void _showFullScreenProperty(
+      Property property, String propertyId, bool isMapView) {
     setState(() {
       _fullScreenPropertyId = propertyId;
       _fullScreenProperty = property;
@@ -561,10 +639,6 @@ class _RealEstateAppState extends State<RealEstateApp>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animationController.forward(from: 0.0);
     });
-  }
-
-  void _showPropertyDetails(Property property) {
-    _showFullScreenProperty(property, property.zpid, false);
   }
 
   void _closeFullScreenProperty() {
@@ -588,34 +662,267 @@ class _RealEstateAppState extends State<RealEstateApp>
     return formatter.format(priceValue);
   }
 
-  void _handleLeftSwipe(Property property) async {
+  void _showPropertyDetailsWithFetch(Property property) async {
     try {
       setState(() {
         _isLoading = true;
       });
-      final response = await _apiCalls.getPropertyImages(property.zpid);
-      Property updatedProperty = property;
 
-      if (response != null && response['images'] != null) {
-        final List<dynamic> imageData = response['images'] as List<dynamic>;
+      // Store the original property data to preserve existing fields
+      final originalJson = property.toJson();
+
+      // Fetch images and details concurrently
+      final imagesResponseFuture = _apiCalls.getPropertyImages(property.zpid);
+      final detailsResponseFuture = _apiCalls.getPropertyDetails(property.zpid);
+
+      final [imagesResponse, detailsResponse] = await Future.wait([
+        imagesResponseFuture,
+        detailsResponseFuture,
+      ]);
+
+      // Log API responses for debugging
+      print('Images response: $imagesResponse');
+      print('Details response: $detailsResponse');
+
+      // Initialize the JSON map with original data to preserve all fields
+      Map<String, dynamic> updatedJson = Map.from(originalJson);
+
+      // Process images (update imageUrls if provided)
+      if (imagesResponse != null && imagesResponse['images'] != null) {
+        final List<dynamic> imageData =
+            imagesResponse['images'] as List<dynamic>;
         if (imageData.isNotEmpty) {
-          List<String> imageUrls = imageData
-              .map((img) => img is Map<String, dynamic> ? img['url'] as String : img as String)
+          updatedJson['imageUrls'] = imageData
+              .map((img) => img is Map<String, dynamic>
+                  ? img['url'] as String
+                  : img as String)
               .toList();
-          if (imageUrls.isNotEmpty) {
-            Map<String, dynamic> propertyJson = property.toJson();
-            propertyJson['imageUrls'] = imageUrls;
-            updatedProperty = Property.fromJson(propertyJson);
-          }
         }
       }
+
+      // Process details with selective merge
+      if (detailsResponse != null && detailsResponse['details'] != null) {
+        final detailedData = detailsResponse['details'] as Map<String, dynamic>;
+
+        // Helper function to update only null fields
+        void updateIfNull(String key, dynamic value) {
+          if (value != null && updatedJson[key] == null) {
+            updatedJson[key] = value;
+          }
+        }
+
+        // Map /details fields, including nested resoFacts and attributionInfo
+        // Only update fields that are null in the original Property
+        updateIfNull('description', detailedData['description']);
+        updateIfNull(
+            'county', detailedData['county'] ?? detailedData['countyName']);
+        updateIfNull(
+            'city', detailedData['city'] ?? detailedData['resoFacts']?['city']);
+        updateIfNull('state',
+            detailedData['state'] ?? detailedData['resoFacts']?['state']);
+        updateIfNull('zipcode',
+            detailedData['zipcode'] ?? detailedData['resoFacts']?['zipCode']);
+        updateIfNull(
+            'virtualTour',
+            detailedData['virtualTour'] ??
+                detailedData['resoFacts']?['virtualTour']);
+        updateIfNull(
+            'brokerageName',
+            detailedData['brokerageName'] ??
+                detailedData['attributionInfo']?['brokerName']);
+        updateIfNull(
+            'agentName',
+            detailedData['agentName'] ??
+                detailedData['attributionInfo']?['agentName']);
+        updateIfNull(
+            'agentPhoneNumber',
+            detailedData['agentPhoneNumber'] ??
+                detailedData['attributionInfo']?['agentPhoneNumber']);
+        updateIfNull(
+            'brokerPhoneNumber',
+            detailedData['brokerPhoneNumber'] ??
+                detailedData['attributionInfo']?['brokerPhoneNumber']);
+        updateIfNull('stories',
+            detailedData['stories'] ?? detailedData['resoFacts']?['stories']);
+        updateIfNull('levels',
+            detailedData['levels'] ?? detailedData['resoFacts']?['levels']);
+        updateIfNull(
+            'hasFireplace',
+            detailedData['hasFireplace'] ??
+                detailedData['resoFacts']?['hasFireplace']);
+        updateIfNull(
+            'fireplaces',
+            detailedData['fireplaces'] ??
+                detailedData['resoFacts']?['fireplaces']);
+        updateIfNull(
+            'basementYN',
+            detailedData['basementYN'] ??
+                detailedData['resoFacts']?['hasBasement']);
+        updateIfNull('basement',
+            detailedData['basement'] ?? detailedData['resoFacts']?['basement']);
+        updateIfNull('roofType',
+            detailedData['roofType'] ?? detailedData['resoFacts']?['roofType']);
+        updateIfNull(
+            'coolingSystem',
+            detailedData['coolingSystem'] ??
+                detailedData['resoFacts']?['cooling']);
+        updateIfNull(
+            'heatingSystem',
+            detailedData['heatingSystem'] ??
+                detailedData['resoFacts']?['heating']);
+        updateIfNull('lotSize',
+            detailedData['lotSize'] ?? detailedData['resoFacts']?['lotSize']);
+        updateIfNull('fencing',
+            detailedData['fencing'] ?? detailedData['resoFacts']?['fencing']);
+        updateIfNull(
+            'bathroomsFull',
+            detailedData['bathroomsFull'] ??
+                detailedData['resoFacts']?['bathroomsFull']);
+        updateIfNull(
+            'bathroomsHalf',
+            detailedData['bathroomsHalf'] ??
+                detailedData['resoFacts']?['bathroomsHalf']);
+        updateIfNull(
+            'aboveGradeFinishedArea',
+            detailedData['aboveGradeFinishedArea'] ??
+                detailedData['resoFacts']?['aboveGradeFinishedArea']);
+        updateIfNull(
+            'belowGradeFinishedArea',
+            detailedData['belowGradeFinishedArea'] ??
+                detailedData['resoFacts']?['belowGradeFinishedArea']);
+        updateIfNull(
+            'parkingFeatures',
+            detailedData['parkingFeatures'] ??
+                detailedData['resoFacts']?['parkingFeatures']);
+        updateIfNull(
+            'parkingCapacity',
+            detailedData['parkingCapacity'] ??
+                detailedData['resoFacts']?['parkingCapacity']);
+        updateIfNull(
+            'garageParkingCapacity',
+            detailedData['garageParkingCapacity'] ??
+                detailedData['resoFacts']?['garageParkingCapacity']);
+        updateIfNull(
+            'appliances',
+            detailedData['appliances'] ??
+                detailedData['resoFacts']?['appliances']);
+        updateIfNull(
+            'interiorFeatures',
+            detailedData['interiorFeatures'] ??
+                detailedData['resoFacts']?['interiorFeatures']);
+        updateIfNull(
+            'exteriorFeatures',
+            detailedData['exteriorFeatures'] ??
+                detailedData['resoFacts']?['exteriorFeatures']);
+        updateIfNull(
+            'constructionMaterials',
+            detailedData['constructionMaterials'] ??
+                detailedData['resoFacts']?['constructionMaterials']);
+        updateIfNull(
+            'patioAndPorchFeatures',
+            detailedData['patioAndPorchFeatures'] ??
+                detailedData['resoFacts']?['patioAndPorchFeatures']);
+        updateIfNull(
+            'laundryFeatures',
+            detailedData['laundryFeatures'] ??
+                detailedData['resoFacts']?['laundryFeatures']);
+        updateIfNull(
+            'pricePerSquareFoot',
+            detailedData['pricePerSquareFoot'] ??
+                detailedData['resoFacts']?['pricePerSquareFoot']);
+        updateIfNull(
+            'photoCount',
+            detailedData['photoCount'] ??
+                detailedData['resoFacts']?['photoCount']);
+        updateIfNull(
+            'lotAreaValue',
+            detailedData['lotAreaValue'] ??
+                detailedData['resoFacts']?['lotSize']);
+        updateIfNull(
+            'lotAreaUnit',
+            detailedData['lotAreaUnit'] ??
+                detailedData['resoFacts']?['lotSizeUnits']);
+        updateIfNull(
+            'yearBuilt',
+            detailedData['yearBuilt'] ??
+                detailedData['resoFacts']?['yearBuilt']);
+        updateIfNull('listingStatus',
+            detailedData['listingStatus'] ?? detailedData['status']);
+        updateIfNull('daysOnZillow',
+            detailedData['daysOnZillow'] ?? detailedData['timeOnZillow']);
+        updateIfNull('hasPool',
+            detailedData['hasPool'] ?? detailedData['resoFacts']?['hasPool']);
+        updateIfNull(
+            'hasAirConditioning',
+            detailedData['hasAirConditioning'] ??
+                detailedData['resoFacts']?['hasCooling']);
+        updateIfNull(
+            'hasGarage',
+            detailedData['hasGarage'] ??
+                detailedData['resoFacts']?['hasGarage']);
+        updateIfNull(
+            'parkingSpots',
+            detailedData['parkingSpots'] ??
+                detailedData['resoFacts']?['parking']);
+        updateIfNull(
+            'isCityView',
+            detailedData['isCityView'] ??
+                detailedData['resoFacts']?['cityView']);
+        updateIfNull(
+            'isMountainView',
+            detailedData['isMountainView'] ??
+                detailedData['resoFacts']?['mountainView']);
+        updateIfNull(
+            'isWaterView',
+            detailedData['isWaterView'] ??
+                detailedData['resoFacts']?['waterView']);
+        updateIfNull(
+            'isParkView',
+            detailedData['isParkView'] ??
+                detailedData['resoFacts']?['parkView']);
+        updateIfNull(
+            'is3dHome',
+            detailedData['is3dHome'] ??
+                detailedData['resoFacts']?['has3DModel']);
+        updateIfNull(
+            'isForeclosed',
+            detailedData['isForeclosed'] ??
+                detailedData['resoFacts']?['isForeclosed']);
+        updateIfNull(
+            'isPreForeclosure',
+            detailedData['isPreForeclosure'] ??
+                detailedData['resoFacts']?['isPreForeclosure']);
+        updateIfNull('timeOnZillow', detailedData['timeOnZillow']);
+        updateIfNull('pageViewCount', detailedData['pageViewCount']);
+        updateIfNull('favoriteCount', detailedData['favoriteCount']);
+
+        // Log the fields that were updated
+        print(
+            'Updated fields: ${updatedJson.entries.where((e) => e.value != originalJson[e.key]).map((e) => '${e.key}: ${e.value}').toList()}');
+      }
+
+      // Create updated Property object
+      final updatedProperty = Property.fromJson(updatedJson);
+
+      // Update the property in _properties and _visibleProperties
+      setState(() {
+        _properties = _properties.map((p) {
+          return p.zpid == property.zpid ? updatedProperty : p;
+        }).toList();
+        _visibleProperties = _visibleProperties.map((p) {
+          return p.zpid == property.zpid ? updatedProperty : p;
+        }).toList();
+      });
+
+      // Show the updated property in full-screen view
       _showFullScreenProperty(updatedProperty, updatedProperty.zpid, false);
     } catch (e) {
-      print('Error getting property images: $e');
+      print('Error getting property details or images: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Failed to load property images: $e'),
-            backgroundColor: Colors.red),
+          content: Text('Failed to load property details or images: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() {
@@ -639,7 +946,8 @@ class _RealEstateAppState extends State<RealEstateApp>
     super.dispose();
   }
 
-  Widget customMessageBuilder(types.CustomMessage message, {required int messageWidth}) {
+  Widget customMessageBuilder(types.CustomMessage message,
+      {required int messageWidth}) {
     if (message.metadata?['type'] == 'combined_response') {
       String? agentResponse = message.metadata?['agentResponse'] as String?;
 
@@ -682,6 +990,19 @@ class _RealEstateAppState extends State<RealEstateApp>
             ),
         ],
       );
+    } else if (message.metadata?['type'] == 'selected_property') {
+      final propertyJson =
+          message.metadata?['property'] as Map<String, dynamic>?;
+      if (propertyJson == null) return const SizedBox.shrink();
+      final property = Property.fromJson(propertyJson);
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Container(
+          width: messageWidth.toDouble() * 0.8,
+          child:
+              _buildPropertyCard(property, property.zpid, false, isChat: true),
+        ),
+      );
     }
     return const SizedBox.shrink();
   }
@@ -689,7 +1010,8 @@ class _RealEstateAppState extends State<RealEstateApp>
   Widget _buildDescriptionSection(Property property) {
     const int maxLines = 3;
     final bool isExpanded = _expandedDescriptions[property.zpid] ?? false;
-    final String description = property.description ?? "N/A";
+    final String description =
+        property.description ?? "No description available";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -699,7 +1021,9 @@ class _RealEstateAppState extends State<RealEstateApp>
             return LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: isExpanded ? [Colors.black, Colors.black] : [Colors.black, Colors.transparent],
+              colors: isExpanded
+                  ? [Colors.black, Colors.black]
+                  : [Colors.black, Colors.transparent],
               stops: isExpanded ? [0.0, 1.0] : [0.7, 1.0],
             ).createShader(bounds);
           },
@@ -766,7 +1090,9 @@ class _RealEstateAppState extends State<RealEstateApp>
               Chip(
                 label: Text(amenity),
                 backgroundColor: const Color.fromRGBO(27, 94, 32, 1),
-                side: BorderSide(color: const Color.fromRGBO(27, 94, 32, 1).withOpacity(0.3)),
+                side: BorderSide(
+                    color:
+                        const Color.fromRGBO(27, 94, 32, 1).withOpacity(0.3)),
               ),
           ],
         ),
@@ -774,19 +1100,111 @@ class _RealEstateAppState extends State<RealEstateApp>
     );
   }
 
+  List<Property> _sortLowToHigh(List<Property> properties) {
+    List<Property> sorted = List.from(properties);
+    sorted.sort((a, b) {
+      double priceA =
+          double.tryParse(a.price.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+      double priceB =
+          double.tryParse(b.price.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+      return priceA.compareTo(priceB);
+    });
+    return sorted;
+  }
+
+  List<Property> _sortHighToLow(List<Property> properties) {
+    List<Property> sorted = List.from(properties);
+    sorted.sort((a, b) {
+      double priceA =
+          double.tryParse(a.price.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+      double priceB =
+          double.tryParse(b.price.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0.0;
+      return priceB.compareTo(priceA);
+    });
+    return sorted;
+  }
+
   Widget _buildPropertyListView() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(8),
-      itemCount: _visibleProperties.length,
-      itemBuilder: (context, index) {
-        final property = _visibleProperties[index];
-        return GestureDetector(
-          onTap: () {
-            _showPropertyDetails(property);
-          },
-          child: _buildPropertyCard(property, property.zpid, false),
-        );
-      },
+    // Apply sorting based on dropdownValue
+    List<Property> displayProperties = _visibleProperties;
+    if (dropdownValue == "Price: Low to High") {
+      displayProperties = _sortLowToHigh(_visibleProperties);
+    } else if (dropdownValue == "Price: High to Low") {
+      displayProperties = _sortHighToLow(_visibleProperties);
+    } // "Top Results" uses backend order, so no sorting
+
+    return Column(
+      children: [
+        if (_isListViewVisible)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(30, 8, 70, 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12.0),
+                border: Border.all(color: const Color.fromRGBO(27, 94, 32, 1)),
+              ),
+              child: DropdownButton<String>(
+                value: dropdownValue,
+                dropdownColor: Colors.white,
+                isExpanded: true,
+                underline: const SizedBox(),
+                icon: const Icon(Icons.arrow_drop_down,
+                    color: Color.fromRGBO(27, 94, 32, 1)),
+                style: const TextStyle(
+                    color: Color.fromRGBO(27, 94, 32, 1), fontSize: 16),
+                items:
+                    filterOptions.map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    dropdownValue = newValue!;
+                  });
+                },
+              ),
+            ),
+          ),
+        Expanded(
+          child: displayProperties.isEmpty
+              ? const Center(child: Text("No properties available"))
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  itemCount: displayProperties.length,
+                  itemBuilder: (context, index) {
+                    final property = displayProperties[index];
+                    return Dismissible(
+                      key: Key(property.zpid),
+                      direction: DismissDirection.endToStart,
+                      onDismissed: (direction) {
+                        _selectProperty(property, property.zpid);
+                      },
+                      background: Container(
+                        color: Colors.white,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        child: const Icon(
+                          Icons.reply_rounded,
+                          color: Colors.green,
+                          size: 50,
+                        ),
+                      ),
+                      child: GestureDetector(
+                        onTap: () {
+                          _showPropertyDetailsWithFetch(property);
+                        },
+                        child:
+                            _buildPropertyCard(property, property.zpid, false),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 
@@ -802,7 +1220,8 @@ class _RealEstateAppState extends State<RealEstateApp>
           Icon(icon, size: 14, color: const Color.fromRGBO(27, 94, 32, 1)),
           const SizedBox(width: 4),
           Text(label,
-              style: const TextStyle(fontSize: 12, color: Color.fromRGBO(27, 94, 32, 1))),
+              style: const TextStyle(
+                  fontSize: 12, color: Color.fromRGBO(27, 94, 32, 1))),
         ],
       ),
     );
@@ -828,14 +1247,53 @@ class _RealEstateAppState extends State<RealEstateApp>
     );
   }
 
-  Widget _buildPropertyCard(Property property, String propertyId, bool isFullScreen) {
+  Widget _buildAgentInformationSection(Property property) {
+    if (property.agentName == null && property.brokerageName == null) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Agent Information",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        if (property.agentName != null)
+          _detailRow("Agent Name", property.agentName!, 16),
+        if (property.agentPhoneNumber != null)
+          _detailRow("Agent Phone", property.agentPhoneNumber!, 16),
+        if (property.brokerageName != null)
+          _detailRow("Brokerage", property.brokerageName!, 16),
+        if (property.brokerPhoneNumber != null)
+          _detailRow("Broker Phone", property.brokerPhoneNumber!, 16),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildPropertyCard(
+      Property property, String propertyId, bool isFullScreen,
+      {bool isChat = false}) {
+    // Use fallback values for null fields
+    final displayAddress =
+        property.address.isNotEmpty ? property.address : 'Address N/A';
+    final displayPrice =
+        property.price.isNotEmpty ? formatPrice(property.price) : '\$0';
+    final displayBedrooms = property.bedrooms?.toString() ?? 'N/A';
+    final displayBathrooms = property.bathrooms?.toString() ?? 'N/A';
+    final displayLivingArea = property.formattedLivingArea.isNotEmpty
+        ? property.formattedLivingArea
+        : 'N/A';
+
     return Card(
       color: Colors.white,
       elevation: isFullScreen ? 0 : 6,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: isFullScreen ? EdgeInsets.zero : const EdgeInsets.all(8),
+      margin:
+          isFullScreen || isChat ? EdgeInsets.zero : const EdgeInsets.all(8),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(isChat ? 8 : 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -845,40 +1303,63 @@ class _RealEstateAppState extends State<RealEstateApp>
                 Expanded(
                   child: Text(
                     formatPropertyType(property.propertyType) ?? 'Property',
-                    style: TextStyle(fontSize: isFullScreen ? 24 : 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: isFullScreen ? 18 : (isChat ? 16 : 18),
+                        fontWeight: FontWeight.bold),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            Text(property.address, style: TextStyle(color: Colors.grey, fontSize: isFullScreen ? 16 : 14)),
-            SizedBox(height: isFullScreen ? 16 : 8),
-            Text(formatPrice(property.price),
-                style: TextStyle(
-                    fontSize: isFullScreen ? 20 : 16,
-                    color: const Color.fromRGBO(27, 94, 32, 1),
-                    fontWeight: FontWeight.bold)),
-            SizedBox(height: isFullScreen ? 16 : 6),
+            const SizedBox(height: 4),
+            Text(
+              displayAddress,
+              style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: isFullScreen ? 14 : (isChat ? 12 : 14)),
+            ),
+            if (isFullScreen &&
+                (property.city != null ||
+                    property.state != null ||
+                    property.zipcode != null ||
+                    property.county != null))
+              Text(
+                "${property.city ?? ''}${property.city != null && property.state != null ? ', ' : ''}${property.state ?? ''} ${property.zipcode ?? ''}${property.county != null ? ' (${property.county})' : ''}",
+                style: const TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+            const SizedBox(height: 8),
+            Text(
+              displayPrice,
+              style: TextStyle(
+                  fontSize: isFullScreen ? 16 : (isChat ? 14 : 16),
+                  color: const Color.fromRGBO(27, 94, 32, 1),
+                  fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _propertyFeatureChipResizable("${property.bedrooms} Beds", isFullScreen),
-                _propertyFeatureChipResizable("${property.bathrooms} Baths", isFullScreen),
-                _propertyFeatureChipResizable(property.formattedLivingArea, isFullScreen),
+                _propertyFeatureChipResizable(
+                    "$displayBedrooms Beds", isFullScreen),
+                _propertyFeatureChipResizable(
+                    "$displayBathrooms Baths", isFullScreen),
+                _propertyFeatureChipResizable(displayLivingArea, isFullScreen),
               ],
             ),
             if (isFullScreen) ...[
               const Divider(height: 32),
-              const Text("Photos", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text("Photos",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               _buildPhotoGallery(property),
-              const Text("Description", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              const Text("Description",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               _buildDescriptionSection(property),
-              const SizedBox(height: 10),
-              _buildNearbyAmenitiesSection(),
               const SizedBox(height: 20),
-              const Text("Property Details", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text("Property Details",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -886,39 +1367,49 @@ class _RealEstateAppState extends State<RealEstateApp>
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                        _detailRow("Year Built", property.yearBuilt ?? 'N/A', 16),
-                        _detailRow("Parking", "${property.parkingSpots ?? 'N/A'} spots", 16)
+                        _detailRow(
+                            "Year Built", property.yearBuilt ?? 'N/A', 16),
+                        _detailRow("Parking",
+                            "${property.parkingSpots ?? 'N/A'} spots", 16),
+                        if (property.lotSize != null)
+                          _detailRow("Lot Size", property.lotSize!, 16),
+                        if (property.pricePerSquareFoot != null)
+                          _detailRow("Price per Sqft",
+                              "\$${property.pricePerSquareFoot}", 16),
                       ])),
                   Expanded(
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                         _detailRow("School District", "Local District", 16),
-                        _detailRow("Type", formatPropertyType(property.propertyType) ?? "Residential", 16)
+                        _detailRow(
+                            "Type",
+                            formatPropertyType(property.propertyType) ??
+                                "Residential",
+                            16),
+                        if (property.fencing != null)
+                          _detailRow("Fencing", property.fencing!, 16),
+                        if (property.daysOnZillow != null)
+                          _detailRow("Days on Market",
+                              property.daysOnZillow.toString(), 16),
                       ])),
                 ],
               ),
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: Row(
-                  children: [
-                    Expanded(child: _actionButton(Icons.calendar_today, "Schedule Tour")),
-                    const SizedBox(width: 16),
-                    Expanded(child: _actionButton(Icons.phone, "Message Agent")),
-                  ],
-                ),
-              ),
+              const SizedBox(height: 20),
+              _buildAgentInformationSection(property),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () => setState(() => _fullScreenIsMapView = true),
-                  icon: const Icon(Icons.map, color: Color.fromRGBO(27, 94, 32, 1)),
-                  label: const Text("View on Map", style: TextStyle(color: Color.fromRGBO(27, 94, 32, 1))),
+                  icon: const Icon(Icons.map,
+                      color: Color.fromRGBO(27, 94, 32, 1)),
+                  label: const Text("View on Map",
+                      style: TextStyle(color: Color.fromRGBO(27, 94, 32, 1))),
                   style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: const BorderSide(color: Color.fromRGBO(27, 94, 32, 1))),
+                      side: const BorderSide(
+                          color: Color.fromRGBO(27, 94, 32, 1))),
                 ),
               ),
             ],
@@ -936,8 +1427,11 @@ class _RealEstateAppState extends State<RealEstateApp>
           Container(
             width: 250,
             margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(8)),
-            child: Center(child: Icon(Icons.photo, size: 50, color: Colors.grey[700])),
+            decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(8)),
+            child: Center(
+                child: Icon(Icons.photo, size: 50, color: Colors.grey[700])),
           ),
       ],
     );
@@ -962,7 +1456,8 @@ class _RealEstateAppState extends State<RealEstateApp>
             itemBuilder: (context, index) {
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+                decoration:
+                    BoxDecoration(borderRadius: BorderRadius.circular(8)),
                 clipBehavior: Clip.antiAlias,
                 child: Stack(
                   fit: StackFit.expand,
@@ -972,7 +1467,9 @@ class _RealEstateAppState extends State<RealEstateApp>
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Container(
                           color: Colors.grey[300],
-                          child: Center(child: Icon(Icons.error_outline, size: 50, color: Colors.grey[700]))),
+                          child: Center(
+                              child: Icon(Icons.error_outline,
+                                  size: 50, color: Colors.grey[700]))),
                       loadingBuilder: (context, child, loadingProgress) {
                         if (loadingProgress == null) return child;
                         return Container(
@@ -980,7 +1477,8 @@ class _RealEstateAppState extends State<RealEstateApp>
                           child: Center(
                             child: CircularProgressIndicator(
                               value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
                                   : null,
                               color: const Color.fromRGBO(27, 94, 32, 1),
                             ),
@@ -992,12 +1490,15 @@ class _RealEstateAppState extends State<RealEstateApp>
                       bottom: 8,
                       right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.7),
                             borderRadius: BorderRadius.circular(12)),
                         child: Text("${index + 1}/${allImages.length}",
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -1017,8 +1518,13 @@ class _RealEstateAppState extends State<RealEstateApp>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("$label: ", style: TextStyle(fontWeight: FontWeight.w500, fontSize: fontSize)),
-          Expanded(child: Text(value, style: TextStyle(fontSize: fontSize), overflow: TextOverflow.ellipsis)),
+          Text("$label: ",
+              style:
+                  TextStyle(fontWeight: FontWeight.w500, fontSize: fontSize)),
+          Expanded(
+              child: Text(value,
+                  style: TextStyle(fontSize: fontSize),
+                  overflow: TextOverflow.ellipsis)),
         ],
       ),
     );
@@ -1036,7 +1542,8 @@ class _RealEstateAppState extends State<RealEstateApp>
     );
   }
 
-  Widget _buildMapView(Property property, String propertyId, bool isFullScreen) {
+  Widget _buildMapView(
+      Property property, String propertyId, bool isFullScreen) {
     final double lat = property.latitude ?? 37.7749;
     final double lng = property.longitude ?? -122.4194;
     final LatLng propertyLocation = LatLng(lat, lng);
@@ -1045,7 +1552,8 @@ class _RealEstateAppState extends State<RealEstateApp>
       Marker(
         markerId: MarkerId(propertyId),
         position: propertyLocation,
-        icon: _customMarker ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+        icon: _customMarker ??
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
         infoWindow: InfoWindow(
             title: formatPropertyType(property.propertyType) ?? 'Property',
             snippet: formatPrice(property.price)),
@@ -1054,14 +1562,20 @@ class _RealEstateAppState extends State<RealEstateApp>
 
     if (isFullScreen) {
       for (var nearbyProperty in _properties) {
-        if (nearbyProperty.zpid != propertyId && nearbyProperty.latitude != null && nearbyProperty.longitude != null) {
+        if (nearbyProperty.zpid != propertyId &&
+            nearbyProperty.latitude != null &&
+            nearbyProperty.longitude != null) {
           markers.add(
             Marker(
               markerId: MarkerId(nearbyProperty.zpid),
-              position: LatLng(nearbyProperty.latitude!, nearbyProperty.longitude!),
-              icon: _nearbyMarker ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+              position:
+                  LatLng(nearbyProperty.latitude!, nearbyProperty.longitude!),
+              icon: _nearbyMarker ??
+                  BitmapDescriptor.defaultMarkerWithHue(
+                      BitmapDescriptor.hueAzure),
               infoWindow: InfoWindow(
-                  title: formatPropertyType(nearbyProperty.propertyType) ?? 'Property',
+                  title: formatPropertyType(nearbyProperty.propertyType) ??
+                      'Property',
                   snippet: formatPrice(nearbyProperty.price)),
             ),
           );
@@ -1072,7 +1586,8 @@ class _RealEstateAppState extends State<RealEstateApp>
     final screenHeight = MediaQuery.of(context).size.height;
     final mapHeight = isFullScreen ? screenHeight * 0.7 : 150.0;
 
-    GoogleMapController? existingController = isFullScreen ? _fullScreenMapController : _mapControllers[propertyId];
+    GoogleMapController? existingController =
+        isFullScreen ? _fullScreenMapController : _mapControllers[propertyId];
 
     return Container(
       height: mapHeight,
@@ -1083,7 +1598,8 @@ class _RealEstateAppState extends State<RealEstateApp>
         children: [
           GoogleMap(
             key: ValueKey('${propertyId}_${isFullScreen}'),
-            initialCameraPosition: CameraPosition(target: propertyLocation, zoom: isFullScreen ? 13 : 15),
+            initialCameraPosition: CameraPosition(
+                target: propertyLocation, zoom: isFullScreen ? 13 : 15),
             markers: markers,
             mapType: MapType.normal,
             myLocationEnabled: false,
@@ -1126,7 +1642,8 @@ class _RealEstateAppState extends State<RealEstateApp>
   }
 
   Widget _buildFullScreenOverlay() {
-    if (_fullScreenPropertyId == null || _fullScreenProperty == null) return const SizedBox.shrink();
+    if (_fullScreenPropertyId == null || _fullScreenProperty == null)
+      return const SizedBox.shrink();
 
     final screenSize = MediaQuery.of(context).size;
     final cardWidth = screenSize.width * 0.9;
@@ -1149,13 +1666,16 @@ class _RealEstateAppState extends State<RealEstateApp>
                   alignment: Alignment.topCenter,
                   child: Container(
                     width: cardWidth,
-                    height: _fullScreenIsMapView ? screenSize.height * 0.75 : cardHeight,
+                    height: _fullScreenIsMapView
+                        ? screenSize.height * 0.75
+                        : cardHeight,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                            color: Colors.black.withOpacity(0.3 * _fadeAnimation.value),
+                            color: Colors.black
+                                .withOpacity(0.3 * _fadeAnimation.value),
                             blurRadius: 15,
                             spreadRadius: 5)
                       ],
@@ -1166,8 +1686,10 @@ class _RealEstateAppState extends State<RealEstateApp>
                           decoration: BoxDecoration(
                               color: Colors.grey[100],
                               borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(16), topRight: Radius.circular(16))),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  topLeft: Radius.circular(16),
+                                  topRight: Radius.circular(16))),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -1175,13 +1697,22 @@ class _RealEstateAppState extends State<RealEstateApp>
                                   icon: const Icon(Icons.close),
                                   onPressed: _closeFullScreenProperty,
                                   iconSize: 24),
-                              Text(formatPropertyType(_fullScreenProperty!.propertyType) ?? 'Property Details',
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                              Text(
+                                  formatPropertyType(
+                                          _fullScreenProperty!.propertyType) ??
+                                      'Property Details',
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold)),
                               if (!_fullScreenIsMapView)
                                 TextButton.icon(
-                                  onPressed: () => setState(() => _fullScreenIsMapView = true),
-                                  icon: const Icon(Icons.map, size: 18, color: Colors.green),
-                                  label: const Text("Map", style: TextStyle(fontSize: 14, color: Colors.green)),
+                                  onPressed: () => setState(
+                                      () => _fullScreenIsMapView = true),
+                                  icon: const Icon(Icons.map,
+                                      size: 18, color: Colors.green),
+                                  label: const Text("Map",
+                                      style: TextStyle(
+                                          fontSize: 14, color: Colors.green)),
                                 ),
                             ],
                           ),
@@ -1189,13 +1720,18 @@ class _RealEstateAppState extends State<RealEstateApp>
                         Expanded(
                           child: ClipRRect(
                             borderRadius: const BorderRadius.only(
-                                bottomLeft: Radius.circular(16), bottomRight: Radius.circular(16)),
+                                bottomLeft: Radius.circular(16),
+                                bottomRight: Radius.circular(16)),
                             child: _fullScreenIsMapView
-                                ? _buildMapView(_fullScreenProperty!, _fullScreenPropertyId!, true)
+                                ? _buildMapView(_fullScreenProperty!,
+                                    _fullScreenPropertyId!, true)
                                 : SingleChildScrollView(
                                     child: Padding(
                                         padding: const EdgeInsets.all(16.0),
-                                        child: _buildPropertyCard(_fullScreenProperty!, _fullScreenPropertyId!, true))),
+                                        child: _buildPropertyCard(
+                                            _fullScreenProperty!,
+                                            _fullScreenPropertyId!,
+                                            true))),
                           ),
                         ),
                       ],
@@ -1214,18 +1750,21 @@ class _RealEstateAppState extends State<RealEstateApp>
     setState(() {
       if (_currentLevel == 0) {
         _currentLevel = 1;
-        _chatHeightAnimation = Tween<double>(begin: _chatHeightFraction, end: 0.4)
-            .animate(_chatHeightController);
+        _chatHeightAnimation =
+            Tween<double>(begin: _chatHeightFraction, end: 0.4)
+                .animate(_chatHeightController);
         _chatHeightFraction = 0.4;
       } else if (_currentLevel == 1) {
         _currentLevel = 2;
-        _chatHeightAnimation = Tween<double>(begin: _chatHeightFraction, end: 0.8)
-            .animate(_chatHeightController);
+        _chatHeightAnimation =
+            Tween<double>(begin: _chatHeightFraction, end: 0.8)
+                .animate(_chatHeightController);
         _chatHeightFraction = 0.8;
       } else {
         _currentLevel = 0;
-        _chatHeightAnimation = Tween<double>(begin: _chatHeightFraction, end: 0.165)
-            .animate(_chatHeightController);
+        _chatHeightAnimation =
+            Tween<double>(begin: _chatHeightFraction, end: 0.165)
+                .animate(_chatHeightController);
         _chatHeightFraction = 0.165;
       }
       _chatHeightController.forward(from: 0.0);
@@ -1259,8 +1798,9 @@ class _RealEstateAppState extends State<RealEstateApp>
         default:
           newHeight = 0.8;
       }
-      _chatHeightAnimation = Tween<double>(begin: _chatHeightFraction, end: newHeight)
-          .animate(_chatHeightController);
+      _chatHeightAnimation =
+          Tween<double>(begin: _chatHeightFraction, end: newHeight)
+              .animate(_chatHeightController);
       _chatHeightFraction = newHeight;
       _chatHeightController.forward(from: 0.0);
     });
@@ -1281,7 +1821,9 @@ class _RealEstateAppState extends State<RealEstateApp>
           Marker(
             markerId: MarkerId(property.zpid),
             position: LatLng(property.latitude!, property.longitude!),
-            icon: _customMarker ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+            icon: _customMarker ??
+                BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueGreen),
             infoWindow: InfoWindow(
                 title: formatPropertyType(property.propertyType) ?? 'Property',
                 snippet: formatPrice(property.price)),
@@ -1298,7 +1840,8 @@ class _RealEstateAppState extends State<RealEstateApp>
             child: Stack(
               children: [
                 GoogleMap(
-                  initialCameraPosition: CameraPosition(target: initialPosition, zoom: 12),
+                  initialCameraPosition:
+                      CameraPosition(target: initialPosition, zoom: 12),
                   markers: markers,
                   mapType: MapType.normal,
                   myLocationEnabled: true,
@@ -1344,8 +1887,14 @@ class _RealEstateAppState extends State<RealEstateApp>
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-                    boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20)),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 4,
+                          offset: Offset(0, -2))
+                    ],
                   ),
                   child: Column(
                     children: [
@@ -1358,23 +1907,35 @@ class _RealEstateAppState extends State<RealEstateApp>
                           }
                         },
                         onVerticalDragEnd: (details) {
-                          if (details.primaryVelocity! < 0 && _currentLevel < 2) {
+                          if (details.primaryVelocity! < 0 &&
+                              _currentLevel < 2) {
                             setState(() {
                               _currentLevel++;
-                              double newHeight = _currentLevel == 0 ? 0.165 : _currentLevel == 1 ? 0.4 : 0.8;
-                              _chatHeightAnimation =
-                                  Tween<double>(begin: _chatHeightFraction, end: newHeight)
-                                      .animate(_chatHeightController);
+                              double newHeight = _currentLevel == 0
+                                  ? 0.165
+                                  : _currentLevel == 1
+                                      ? 0.4
+                                      : 0.8;
+                              _chatHeightAnimation = Tween<double>(
+                                      begin: _chatHeightFraction,
+                                      end: newHeight)
+                                  .animate(_chatHeightController);
                               _chatHeightFraction = newHeight;
                               _chatHeightController.forward(from: 0.0);
                             });
-                          } else if (details.primaryVelocity! > 0 && _currentLevel > 0) {
+                          } else if (details.primaryVelocity! > 0 &&
+                              _currentLevel > 0) {
                             setState(() {
                               _currentLevel--;
-                              double newHeight = _currentLevel == 0 ? 0.165 : _currentLevel == 1 ? 0.4 : 0.8;
-                              _chatHeightAnimation =
-                                  Tween<double>(begin: _chatHeightFraction, end: newHeight)
-                                      .animate(_chatHeightController);
+                              double newHeight = _currentLevel == 0
+                                  ? 0.165
+                                  : _currentLevel == 1
+                                      ? 0.4
+                                      : 0.8;
+                              _chatHeightAnimation = Tween<double>(
+                                      begin: _chatHeightFraction,
+                                      end: newHeight)
+                                  .animate(_chatHeightController);
                               _chatHeightFraction = newHeight;
                               _chatHeightController.forward(from: 0.0);
                             });
@@ -1388,7 +1949,9 @@ class _RealEstateAppState extends State<RealEstateApp>
                                   width: 45,
                                   height: 5,
                                   decoration: BoxDecoration(
-                                      color: Colors.grey[400], borderRadius: BorderRadius.circular(10)))),
+                                      color: Colors.grey[400],
+                                      borderRadius:
+                                          BorderRadius.circular(10)))),
                         ),
                       ),
                       Expanded(
@@ -1402,37 +1965,57 @@ class _RealEstateAppState extends State<RealEstateApp>
                                 onSendPressed: _handleSendPressed,
                                 user: _user,
                                 customMessageBuilder: customMessageBuilder,
-                                inputOptions:
-                                    const InputOptions(sendButtonVisibilityMode: SendButtonVisibilityMode.always),
+                                inputOptions: const InputOptions(
+                                    sendButtonVisibilityMode:
+                                        SendButtonVisibilityMode.always),
                                 theme: const DefaultChatTheme(
                                   backgroundColor: Colors.white,
-                                  inputBackgroundColor: Color.fromARGB(255, 230, 230, 230),
+                                  inputBackgroundColor:
+                                      Color.fromARGB(255, 230, 230, 230),
                                   primaryColor: Color.fromRGBO(88, 88, 88, 1),
-                                  inputBorderRadius: BorderRadius.all(Radius.circular(0)),
+                                  inputBorderRadius:
+                                      BorderRadius.all(Radius.circular(0)),
                                   inputTextColor: Colors.black,
                                   inputMargin: EdgeInsets.fromLTRB(0, 0, 0, 0),
-                                  sendButtonIcon:
-                                      Icon(Icons.send, size: 24, color: Color.fromRGBO(4, 36, 6, 1)),
+                                  sendButtonIcon: Icon(Icons.send,
+                                      size: 24,
+                                      color: Color.fromRGBO(4, 36, 6, 1)),
                                   secondaryColor: Color.fromRGBO(52, 99, 56, 1),
                                   highlightMessageColor: Colors.white,
-                                  receivedMessageBodyTextStyle: TextStyle(color: Colors.white, fontSize: 17),
-                                  sentMessageBodyTextStyle: TextStyle(color: Colors.white, fontSize: 17),
-                                  inputTextCursorColor: Color.fromRGBO(4, 36, 6, 1),
-                                  inputPadding: EdgeInsets.fromLTRB(12, 20, 12, 25),
-                                  inputContainerDecoration: BoxDecoration(color: Colors.transparent),
+                                  receivedMessageBodyTextStyle: TextStyle(
+                                      color: Colors.white, fontSize: 17),
+                                  sentMessageBodyTextStyle: TextStyle(
+                                      color: Colors.white, fontSize: 17),
+                                  inputTextCursorColor:
+                                      Color.fromRGBO(4, 36, 6, 1),
+                                  inputPadding:
+                                      EdgeInsets.fromLTRB(12, 20, 12, 25),
+                                  inputContainerDecoration:
+                                      BoxDecoration(color: Colors.transparent),
                                 ),
                               ),
                             Positioned(
                               top: 10,
-                              left: _isListViewVisible ? 10 : null,
-                              right: _isListViewVisible ? null : 10,
-                              child: IconButton(
-                                icon: Icon(_isListViewVisible ? Icons.chat : Icons.list),
-                                onPressed: () {
-                                  setState(() {
-                                    _isListViewVisible = !_isListViewVisible;
-                                  });
-                                },
+                              right: 10,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.8),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    _isListViewVisible
+                                        ? Icons.chat_rounded
+                                        : Icons.list_rounded,
+                                  ),
+                                  color: const Color.fromRGBO(27, 94, 32, 1),
+                                  onPressed: () {
+                                    setState(() {
+                                      _isListViewVisible = !_isListViewVisible;
+                                    });
+                                  },
+                                  iconSize: 30,
+                                ),
                               ),
                             ),
                           ],
@@ -1448,7 +2031,8 @@ class _RealEstateAppState extends State<RealEstateApp>
             Container(
                 color: Colors.black.withOpacity(0.3),
                 child: const Center(
-                    child: CircularProgressIndicator(color: Color.fromRGBO(27, 94, 32, 1)))),
+                    child: CircularProgressIndicator(
+                        color: Color.fromRGBO(27, 94, 32, 1)))),
           if (_errorMessage != null)
             Positioned(
               top: 100,
@@ -1456,9 +2040,12 @@ class _RealEstateAppState extends State<RealEstateApp>
               right: 20,
               child: Container(
                 padding: const EdgeInsets.all(16),
-                decoration:
-                    BoxDecoration(color: Colors.red[100], borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.red)),
-                child: Text(_errorMessage!, style: TextStyle(color: Colors.red[900])),
+                decoration: BoxDecoration(
+                    color: Colors.red[100],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red)),
+                child: Text(_errorMessage!,
+                    style: TextStyle(color: Colors.red[900])),
               ),
             ),
           if (_selectedProperty != null)
@@ -1466,12 +2053,16 @@ class _RealEstateAppState extends State<RealEstateApp>
               bottom: MediaQuery.of(context).viewInsets.bottom + 80,
               right: 16,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.green.shade600,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 5, offset: const Offset(0, 2))
+                    BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2))
                   ],
                 ),
                 child: Row(
@@ -1480,14 +2071,16 @@ class _RealEstateAppState extends State<RealEstateApp>
                     const Icon(Icons.home, color: Colors.white, size: 18),
                     const SizedBox(width: 6),
                     const Text("Property Selected",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
                     const SizedBox(width: 6),
                     GestureDetector(
                         onTap: () => setState(() {
                               _selectedProperty = null;
                               _selectedPropertyId = null;
                             }),
-                        child: const Icon(Icons.close, color: Colors.white, size: 18)),
+                        child: const Icon(Icons.close,
+                            color: Colors.white, size: 18)),
                   ],
                 ),
               ),
