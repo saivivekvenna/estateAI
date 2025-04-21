@@ -1,3 +1,5 @@
 **Estate AI**
 
 An AI interface app that allows users to find homes using natural language queries. 
+
+Available on IOS app store. 
